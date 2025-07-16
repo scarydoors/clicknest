@@ -15,6 +15,7 @@
             go
             gcc
             glibc.dev
+            air
           ];
         };
       }
