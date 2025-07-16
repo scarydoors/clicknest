@@ -1,0 +1,22 @@
+services:
+  analytics-db:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - analytics-db-data:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: wget --spider -q http://localhost:8123/ping || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  analytics-db-data:
