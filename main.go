@@ -8,6 +8,8 @@ import (
 	"os"
 )
 
+const EventTypePageview = "pageview"
+
 type Event struct {
 	Domain string `json:"domain"`
 	Type string `json:"type"`
