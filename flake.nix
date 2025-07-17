@@ -16,6 +16,7 @@
             gcc
             glibc.dev
             air
+            goose
           ];
         };
       }

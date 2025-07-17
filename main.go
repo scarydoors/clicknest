@@ -1,43 +1,56 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"time"
+
+	"github.com/scarydoors/clicknest/internal/server"
 )
 
-const EventTypePageview = "pageview"
-
-type Event struct {
-	Domain string `json:"domain"`
-	Type string `json:"type"`
-	Url string `json:"url"`
-}
-
-func handleEventPost(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
-	var event Event
-
-	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	fmt.Printf("recieved event: %+v\n", event)
-}
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST /event", handleEventPost)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	fmt.Printf("Serving server at port :6969\n")
-	if err := http.ListenAndServe(":6969", mux); errors.Is(err, http.ErrServerClosed){
-		fmt.Printf("server closed\n")
-	} else if err != nil {
-		fmt.Printf("error starting server: %s", err)
-		os.Exit(1)
+	srv := server.NewServer(logger)
+
+	httpServer := http.Server{
+		Addr: ":6969",
+		Handler: srv,
 	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	go func() {
+		logger.Info("server listening", slog.String("addr", httpServer.Addr))
+		if err := httpServer.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				logger.Info("closing server...")
+			} else {
+				logger.Error("error listening", slog.Any("error", err))
+			}
+		}
+	}()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		defer cancel()
+
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			logger.Error("error while shutting down server", slog.Any("error", err))
+		}
+	}()
+
+	wg.Wait()
 }
