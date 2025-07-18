@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,12 +11,31 @@ import (
 	"sync"
 	"time"
 
+	"github.com/scarydoors/clicknest/internal/clickhouse"
 	"github.com/scarydoors/clicknest/internal/server"
 )
 
 
 func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	clickhouseDB, err := clickhouse.NewClickhouseDB(ctx, clickhouse.ClickhouseDBConfig{
+		Host: "localhost",
+		Port: "9000",
+		Database: "default",
+		Username: "default",
+		Password: "",
+	})
+
+	if err != nil {
+		log.Fatalf("failed clickhouse init: %s", err)
+	}
+
+	defer clickhouseDB.Close()
+
 
 	srv := server.NewServer(logger)
 
@@ -23,9 +43,6 @@ func main() {
 		Addr: ":6969",
 		Handler: srv,
 	}
-
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
 
 	go func() {
 		logger.Info("server listening", slog.String("addr", httpServer.Addr))
