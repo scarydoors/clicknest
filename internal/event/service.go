@@ -1,19 +1,31 @@
 package event
 
-import "log/slog"
+import (
+	"context"
+	"fmt"
+	"log/slog"
+)
 
-const EventTypePageview = "pageview"
-
-type Event struct {
-	Domain string `json:"domain"`
-	Type   string `json:"type"`
-	Url    string `json:"url"`
+type Service struct {
+	storage Storage
+	logger *slog.Logger
 }
 
-func (e Event) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("domain", e.Domain),
-		slog.String("type", e.Type),
-		slog.String("url", e.Url),
-	)
+type Storage interface {
+	InsertEvent(context.Context, Event) error
+}
+
+func NewService(storage Storage, logger *slog.Logger) *Service {
+	return &Service{
+		storage: storage,
+		logger: logger,
+	}	
+}
+
+func (s *Service) IngestEvent(ctx context.Context, event Event) error {
+	if err := s.storage.InsertEvent(ctx, event); err != nil {
+		return fmt.Errorf("insert event: %w", err)
+	}
+
+	return nil
 }

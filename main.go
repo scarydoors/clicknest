@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/scarydoors/clicknest/internal/clickhouse"
+	"github.com/scarydoors/clicknest/internal/event"
 	"github.com/scarydoors/clicknest/internal/server"
 )
 
@@ -36,8 +37,8 @@ func main() {
 
 	defer clickhouseDB.Close()
 
-
-	srv := server.NewServer(logger)
+	eventService := event.NewService(clickhouseDB, logger)
+	srv := server.NewServer(logger, eventService)
 
 	httpServer := http.Server{
 		Addr: ":6969",
