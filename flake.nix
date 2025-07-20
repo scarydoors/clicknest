@@ -17,6 +17,7 @@
             glibc.dev
             air
             goose
+            goperf
           ];
         };
       }

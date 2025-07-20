@@ -25,7 +25,6 @@ func TestMain(m *testing.M) {
 	dbname := "default"
 
 	clickhouseContainer, err := clickhousetc.Run(ctx,
-
 		"clickhouse/clickhouse-server:23.3.8.21-alpine",
 		clickhousetc.WithUsername(user),
 		clickhousetc.WithPassword(password),
@@ -68,6 +67,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Run migrations
+	goose.SetLogger(goose.NopLogger())
 	goose.SetDialect("clickhouse")
 	if err := goose.Up(db, "../../migrations"); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
