@@ -25,3 +25,23 @@ func BenchmarkInsertEvent(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkBatchInsertEvent(b *testing.B) {
+	ctx := context.Background()
+	evt := event.Event{
+		Timestamp: time.Now(),
+		Domain: "what.com",
+		Kind: "pageview",
+		Pathname: "https://what.com/yeah",
+	}
+
+	evts := make([]event.Event, 0, 100000)
+	for range 100000 {
+		evts = append(evts, evt)
+	}
+	for b.Loop() {
+		if err := clickhouseDB.BatchInsertEvent(ctx, evts); err != nil {
+			b.Errorf("%s", err)
+		}
+	}
+}
