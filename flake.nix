@@ -14,10 +14,10 @@
           buildInputs = with pkgs; [
             go
             gcc
-            glibc.dev
             air
             goose
             goperf
+            git
           ];
         };
       }
