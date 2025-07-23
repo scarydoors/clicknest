@@ -16,11 +16,7 @@ type ClickhouseDBConfig struct {
 	Password string
 }
 
-type ClickhouseDB struct {
-	conn driver.Conn
-}
-
-func NewClickhouseDB(context context.Context, config ClickhouseDBConfig) (*ClickhouseDB, error) {
+func NewClickhouseConn(context context.Context, config ClickhouseDBConfig) (driver.Conn, error) {
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{fmt.Sprintf("%s:%s", config.Host, config.Port)},
 		Auth: clickhouse.Auth{
@@ -38,11 +34,5 @@ func NewClickhouseDB(context context.Context, config ClickhouseDBConfig) (*Click
 		return nil, fmt.Errorf("ping: %w", err)
 	}
 
-	return &ClickhouseDB{
-		conn: conn,
-	}, nil
-}
-
-func (c *ClickhouseDB) Close() {
-	c.conn.Close()
+	return conn, nil
 }
