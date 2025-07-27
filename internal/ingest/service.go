@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+
+	"github.com/scarydoors/clicknest/internal/analytics"
 )
 
 type Service struct {
@@ -12,7 +14,7 @@ type Service struct {
 }
 
 type Storage interface {
-	InsertEvent(context.Context, Event) error
+	InsertEvent(context.Context, analytics.Event) error
 }
 
 func NewService(storage Storage, logger *slog.Logger) *Service {
@@ -22,7 +24,7 @@ func NewService(storage Storage, logger *slog.Logger) *Service {
 	}	
 }
 
-func (s *Service) IngestEvent(ctx context.Context, event Event) error {
+func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error {
 	if err := s.storage.InsertEvent(ctx, event); err != nil {
 		return fmt.Errorf("insert event: %w", err)
 	}
