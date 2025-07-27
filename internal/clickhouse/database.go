@@ -31,6 +31,7 @@ func NewClickhouseConn(context context.Context, config ClickhouseDBConfig) (driv
 	}
 
 	if err := conn.Ping(context); err != nil {
+		conn.Close()
 		return nil, fmt.Errorf("ping: %w", err)
 	}
 

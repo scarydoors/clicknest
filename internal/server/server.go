@@ -4,12 +4,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/scarydoors/clicknest/internal/event"
+	"github.com/scarydoors/clicknest/internal/ingest"
 )
 
-func NewServer(logger *slog.Logger, eventService *event.Service) http.Handler {
+func NewServer(logger *slog.Logger, ingestService *ingest.Service) http.Handler {
 	mux := http.NewServeMux()
-	setupRoutes(mux, logger, eventService)
+	setupRoutes(mux, logger, ingestService)
 
 	return mux
 }

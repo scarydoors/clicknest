@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/scarydoors/clicknest/internal/event"
+	"github.com/scarydoors/clicknest/internal/analytics"
 )
 
 type EventRepository struct {
@@ -19,7 +19,13 @@ type EventModel struct {
 	Pathname string `ch:"pathname"`
 }
 
-func (c *EventRepository) InsertEvent(ctx context.Context, e event.Event) error {
+func NewEventRepository(conn driver.Conn) *EventRepository {
+	return &EventRepository{
+		conn: conn,
+	}
+}
+
+func (c *EventRepository) InsertEvent(ctx context.Context, e analytics.Event) error {
 	err := c.conn.Exec(
 		ctx,
 		`INSERT INTO events (
@@ -41,7 +47,7 @@ func (c *EventRepository) InsertEvent(ctx context.Context, e event.Event) error 
 	return nil;
 }
 
-func (c *EventRepository) AsyncInsertEvent(ctx context.Context, e event.Event) error {
+func (c *EventRepository) AsyncInsertEvent(ctx context.Context, e analytics.Event) error {
 	err := c.conn.AsyncInsert(
 		ctx,
 		`INSERT INTO events (
@@ -64,7 +70,7 @@ func (c *EventRepository) AsyncInsertEvent(ctx context.Context, e event.Event) e
 	return nil;
 }
 
-func (c *EventRepository) BatchInsertEvent(ctx context.Context, e []event.Event) error {
+func (c *EventRepository) BatchInsertEvent(ctx context.Context, e []analytics.Event) error {
 	batch, err := c.conn.PrepareBatch(ctx,
 		`INSERT INTO events (
 			timestamp,

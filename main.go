@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/scarydoors/clicknest/internal/clickhouse"
-	"github.com/scarydoors/clicknest/internal/event"
+	"github.com/scarydoors/clicknest/internal/ingest"
 	"github.com/scarydoors/clicknest/internal/server"
 )
 
@@ -23,7 +23,7 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	clickhouseDB, err := clickhouse.NewClickhouseDB(ctx, clickhouse.ClickhouseDBConfig{
+	clickhouseDB, err := clickhouse.NewClickhouseConn(ctx, clickhouse.ClickhouseDBConfig{
 		Host: "localhost",
 		Port: "9000",
 		Database: "default",
@@ -37,8 +37,10 @@ func main() {
 
 	defer clickhouseDB.Close()
 
-	eventService := event.NewService(clickhouseDB, logger)
-	srv := server.NewServer(logger, eventService)
+	eventRepo := clickhouse.NewEventRepository(clickhouseDB)
+
+	ingestService := ingest.NewService(eventRepo, logger)
+	srv := server.NewServer(logger, ingestService)
 
 	httpServer := http.Server{
 		Addr: ":6969",

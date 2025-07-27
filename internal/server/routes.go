@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/scarydoors/clicknest/internal/event"
+	"github.com/scarydoors/clicknest/internal/analytics"
+	"github.com/scarydoors/clicknest/internal/ingest"
 )
 
-func setupRoutes(mux *http.ServeMux, logger *slog.Logger, eventService *event.Service) {
-	mux.Handle("POST /event", handleEventPost(eventService, logger))
+func setupRoutes(mux *http.ServeMux, logger *slog.Logger, ingestService *ingest.Service) {
+	mux.Handle("POST /event", handleEventPost(ingestService, logger))
 	mux.Handle("/", http.NotFoundHandler())
 }
 
@@ -20,7 +21,7 @@ type EventRequest struct {
 	Url    string `json:"url"`
 }
 
-func handleEventPost(eventService *event.Service, logger *slog.Logger) http.Handler {
+func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
@@ -33,7 +34,7 @@ func handleEventPost(eventService *event.Service, logger *slog.Logger) http.Hand
 				return
 			}
 
-			event, err := event.NewEvent(
+			event, err := analytics.NewEvent(
 				time.Now(),
 				eventRequest.Domain,
 				eventRequest.Kind,
@@ -44,7 +45,7 @@ func handleEventPost(eventService *event.Service, logger *slog.Logger) http.Hand
 				return
 			}
 
-			if err := eventService.IngestEvent(ctx, event); err != nil {
+			if err := ingestService.IngestEvent(ctx, event); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
