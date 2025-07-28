@@ -23,6 +23,7 @@ CREATE TABLE sessions
     session_id UInt64,
     user_id UInt64,
     sign Int8,
+    INDEX minmax_end end TYPE minmax GRANULARITY 1,
 )
 ENGINE = VersionedCollapsingMergeTree(sign, event_count)
 PARTITION BY toYYYYMM(start)
