@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/pressly/goose/v3"
 	"github.com/scarydoors/clicknest/internal/clickhouse"
 	"github.com/testcontainers/testcontainers-go"
@@ -15,7 +16,7 @@ import (
 )
 
 var (
-	clickhouseDB *clickhouse.ClickhouseDB
+	clickhouseDB driver.Conn
 )
 
 func TestMain(m *testing.M) {
@@ -73,7 +74,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	clickhouseDB, err = clickhouse.NewClickhouseDB(ctx, config)
+	clickhouseDB, err = clickhouse.NewClickhouseConn(ctx, config)
 
 	if err != nil {
 		log.Printf("new clickhouse db: %s", err)

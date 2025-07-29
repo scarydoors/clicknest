@@ -3,12 +3,14 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
-func (c *ClickhouseDB) TruncateTables(ctx context.Context, tableNames... string) error {
+func TruncateTables(ctx context.Context, conn driver.Conn, tableNames... string) error {
 	for _, table := range tableNames {
 		query := fmt.Sprintf("TRUNCATE TABLE %s", table)
-		if err := c.conn.Exec(ctx, query); err != nil {
+		if err := conn.Exec(ctx, query); err != nil {
 			return err
 		}
 	}

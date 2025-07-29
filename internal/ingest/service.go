@@ -41,8 +41,8 @@ type runner interface {
 }
 
 func (s *Service) StartWorkers(config WorkerConfig) error {
-	eventWriter := newBufferedExecutor(s.flushEvents, nil, config.FlushInterval, config.FlushLimit)
-	sessionWriter := newBufferedExecutor(s.flushSessions, nil, config.FlushInterval, config.FlushLimit)
+	eventWriter := newBufferedExecutor(s.handleEventFlush, nil, config.FlushInterval, config.FlushLimit)
+	sessionWriter := newBufferedExecutor(s.handleSessionFlush, nil, config.FlushInterval, config.FlushLimit)
 
 	runners := [2]runner{
 		eventWriter,
@@ -60,10 +60,18 @@ func (s *Service) StartWorkers(config WorkerConfig) error {
 		}()
 	}
 
+	s.eventWriter = eventWriter
+	s.sessionWriter = sessionWriter
+
 	return nil
 }
 
 func (s *Service) ShutdownWorkers(ctx context.Context) error {
+	defer func() {
+		s.eventWriter = nil
+		s.sessionWriter = nil
+	}()
+
 	s.writerCancel()
 
 	done := make(chan struct{})	
@@ -74,10 +82,14 @@ func (s *Service) ShutdownWorkers(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("unable to perform final flush: %w", ctx.Err())
 	case <-done:
-		return nil
 	}
+
+	s.eventWriter.flush(ctx)
+	s.sessionWriter.flush(ctx)
+
+	return nil
 }
 
 func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error {
@@ -88,7 +100,7 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 	return nil
 }
 
-func (s *Service) flushEvents(ctx context.Context, events []analytics.Event) error {
+func (s *Service) handleEventFlush(ctx context.Context, events []analytics.Event) error {
 	if err := s.storage.BatchInsertEvent(ctx, events); err != nil {
 		return fmt.Errorf("batch insert event: %w", err)
 	}
@@ -96,6 +108,6 @@ func (s *Service) flushEvents(ctx context.Context, events []analytics.Event) err
 	return nil
 }
 
-func (s *Service) flushSessions(ctx context.Context, sessions []analytics.Session) error {
+func (s *Service) handleSessionFlush(ctx context.Context, sessions []analytics.Session) error {
 	return nil
 }
