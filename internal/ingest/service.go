@@ -64,6 +64,8 @@ func (s *Service) StartWorkers(config WorkerConfig) error {
 }
 
 func (s *Service) ShutdownWorkers(ctx context.Context) error {
+	s.writerCancel()
+
 	done := make(chan struct{})	
 	go func() {
 		defer close(done)
