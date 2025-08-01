@@ -39,9 +39,10 @@ func main() {
 	eventRepo := clickhouse.NewEventRepository(clickhouseDB)
 
 	ingestService := ingest.NewService(eventRepo, logger)
-	ingestService.StartWorkers(ingest.WorkerConfig{
-		FlushInterval: 4 * time.Second,
-		FlushLimit: 100000,
+	ingestService.StartWorkers(ingest.FlushConfig{
+		Interval: 4 * time.Second,
+		Limit: 100000,
+		Timeout: 10 * time.Second,
 	})
 	srv := server.NewServer(logger, ingestService)
 

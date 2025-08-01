@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
-	"time"
 
 	"github.com/scarydoors/clicknest/internal/analytics"
 )
@@ -31,18 +30,13 @@ func NewService(storage Storage, logger *slog.Logger) *Service {
 	}	
 }
 
-type WorkerConfig struct {
-	FlushInterval time.Duration
-	FlushLimit int
-}
-
 type runner interface {
 	run(context.Context) error
 }
 
-func (s *Service) StartWorkers(config WorkerConfig) error {
-	eventWriter := newBufferedExecutor(s.handleEventFlush, s.createWriterErrorHandler("event"), config.FlushInterval, config.FlushLimit)
-	sessionWriter := newBufferedExecutor(s.handleSessionFlush, s.createWriterErrorHandler("session"), config.FlushInterval, config.FlushLimit)
+func (s *Service) StartWorkers(config FlushConfig) error {
+	eventWriter := newBufferedExecutor(s.handleEventFlush, s.createWriterErrorHandler("event"), config)
+	sessionWriter := newBufferedExecutor(s.handleSessionFlush, s.createWriterErrorHandler("session"), config)
 
 	runners := [2]runner{
 		eventWriter,
