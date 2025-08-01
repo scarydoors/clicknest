@@ -96,6 +96,10 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 	if s.eventWriter == nil {
 		return fmt.Errorf("event worker not running")
 	}
+	if s.sessionWriter == nil {
+		return fmt.Errorf("session worker not running")
+	}
+
 
 	if err := s.eventWriter.push(event); err != nil {
 		return fmt.Errorf("push event: %w", err)
@@ -114,10 +118,6 @@ func (s *Service) handleEventFlush(ctx context.Context, events []analytics.Event
 }
 
 func (s *Service) handleSessionFlush(ctx context.Context, sessions []analytics.Session) error {
-	if s.sessionWriter == nil {
-		return fmt.Errorf("session worker not running")
-	}
-
 	return nil
 }
 

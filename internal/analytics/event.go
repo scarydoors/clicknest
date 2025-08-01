@@ -14,6 +14,7 @@ type Event struct {
 	Domain string
 	Kind string
 	Pathname string
+	UserId uint64
 }
 
 func NewEvent(timestamp time.Time, domain, kind, rawUrl string) (Event, error) {
