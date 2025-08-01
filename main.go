@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"time"
 
 	"github.com/scarydoors/clicknest/internal/clickhouse"
@@ -40,6 +39,10 @@ func main() {
 	eventRepo := clickhouse.NewEventRepository(clickhouseDB)
 
 	ingestService := ingest.NewService(eventRepo, logger)
+	ingestService.StartWorkers(ingest.WorkerConfig{
+		FlushInterval: 4 * time.Second,
+		FlushLimit: 100000,
+	})
 	srv := server.NewServer(logger, ingestService)
 
 	httpServer := http.Server{
@@ -58,10 +61,9 @@ func main() {
 		}
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	done := make(chan struct{})
 	go func() {
-		defer wg.Done()
+		defer close(done)
 		<-ctx.Done()
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -70,7 +72,10 @@ func main() {
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			logger.Error("error while shutting down server", slog.Any("error", err))
 		}
-	}()
 
-	wg.Wait()
+		if err := ingestService.ShutdownWorkers(shutdownCtx); err != nil {
+			logger.Error("error while shutting down server", slog.Any("error", err))
+		}
+	}()
+	<-done
 }
