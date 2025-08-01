@@ -41,8 +41,8 @@ type runner interface {
 }
 
 func (s *Service) StartWorkers(config WorkerConfig) error {
-	eventWriter := newBufferedExecutor(s.handleEventFlush, nil, config.FlushInterval, config.FlushLimit)
-	sessionWriter := newBufferedExecutor(s.handleSessionFlush, nil, config.FlushInterval, config.FlushLimit)
+	eventWriter := newBufferedExecutor(s.handleEventFlush, s.createWriterErrorHandler("event"), config.FlushInterval, config.FlushLimit)
+	sessionWriter := newBufferedExecutor(s.handleSessionFlush, s.createWriterErrorHandler("session"), config.FlushInterval, config.FlushLimit)
 
 	runners := [2]runner{
 		eventWriter,
@@ -93,6 +93,10 @@ func (s *Service) ShutdownWorkers(ctx context.Context) error {
 }
 
 func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error {
+	if s.eventWriter == nil {
+		return fmt.Errorf("event worker not running")
+	}
+
 	if err := s.eventWriter.push(event); err != nil {
 		return fmt.Errorf("push event: %w", err)
 	}
@@ -102,12 +106,22 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 
 func (s *Service) handleEventFlush(ctx context.Context, events []analytics.Event) error {
 	if err := s.storage.BatchInsertEvent(ctx, events); err != nil {
-		return fmt.Errorf("batch insert event: %w", err)
+		return err
 	}
 
 	return nil
 }
 
 func (s *Service) handleSessionFlush(ctx context.Context, sessions []analytics.Session) error {
+	if s.sessionWriter == nil {
+		return fmt.Errorf("session worker not running")
+	}
+
 	return nil
+}
+
+func (s *Service) createWriterErrorHandler(name string) func(context.Context, error) {
+	return func(ctx context.Context, err error) {
+		s.logger.ErrorContext(ctx, "failed to flush writer", slog.String("writerName", name), slog.Any("error", err))
+	}
 }

@@ -9,7 +9,7 @@ type bufferedExecutor[T any] struct {
 	flushInterval time.Duration
 	flushLimit int
 	execCallback func(context.Context, []T) error
-	errorCallback func(error)
+	errorCallback func(context.Context, error)
 
 	buf []T
 	itemCh chan T
@@ -20,7 +20,7 @@ type bufferedExecutor[T any] struct {
 
 func newBufferedExecutor[T any](
 	execCallback func(context.Context, []T) error,
-	errorCallback func(error),
+	errorCallback func(context.Context, error),
 	flushInterval time.Duration,
 	flushLimit int,
 ) *bufferedExecutor[T] {
@@ -37,8 +37,14 @@ func newBufferedExecutor[T any](
 }
 
 func (b *bufferedExecutor[T]) run(ctx context.Context) error {
-	tickCh := time.Tick(b.flushInterval)
 	defer close(b.itemCh)
+
+	var timer <-chan time.Time
+	resetTimer := func() {
+		timer = time.After(b.flushInterval)
+	}
+
+	resetTimer()
 
 	b.ctx = ctx
 	close(b.readyCh)
@@ -48,13 +54,15 @@ func (b *bufferedExecutor[T]) run(ctx context.Context) error {
 		case <-b.ctx.Done():
 			return b.ctx.Err()
 
-		case <-tickCh:
-			b.flush(context.Background())
+		case <-timer:
+			b.flush(ctx)
+			resetTimer()
 
 		case item := <-b.itemCh:
 			b.buf = append(b.buf, item)
 			if len(b.buf) >= b.flushLimit {
-				b.flush(context.Background())
+				b.flush(ctx)
+				resetTimer()
 			}
 		}
 	}
@@ -77,7 +85,11 @@ func (b *bufferedExecutor[T]) flush(ctx context.Context) {
 	}
 
 	if err := b.execCallback(ctx, b.buf); err != nil {
-		b.errorCallback(err)
+		b.errorCallback(ctx, err)
+
+		if err == context.Canceled {
+			return
+		}
 	}
 
 	b.buf = b.buf[:0]
