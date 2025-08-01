@@ -16,8 +16,9 @@ type EventModel struct {
 	Timestamp time.Time `ch:"timestamp"`
 	Domain string `ch:"domain"`
 	Kind string `ch:"kind"`
-	Pathname string `ch:"pathname"`
+	SessionId uint64 `ch:"session_id"`
 	UserId uint64 `ch:"user_id"`
+	Pathname string `ch:"pathname"`
 }
 
 func NewEventRepository(conn driver.Conn) *EventRepository {
@@ -31,8 +32,9 @@ func marshalEvent(event analytics.Event) EventModel {
 		Timestamp: event.Timestamp,
 		Domain: event.Domain,
 		Kind: event.Kind,
-		Pathname: event.Pathname,
+		SessionId: event.SessionId,
 		UserId: event.UserId,
+		Pathname: event.Pathname,
 	}
 }
 
@@ -42,8 +44,9 @@ func (c *EventRepository) BatchInsertEvent(ctx context.Context, events []analyti
 			timestamp,
 			domain,
 			kind,
-			pathname,
-		    user_id
+			session_id,
+		    user_id,
+			pathname
 		)`,
 	)
 	if err != nil {
