@@ -17,6 +17,7 @@ type EventModel struct {
 	Domain string `ch:"domain"`
 	Kind string `ch:"kind"`
 	Pathname string `ch:"pathname"`
+	UserId uint64 `ch:"user_id"`
 }
 
 func NewEventRepository(conn driver.Conn) *EventRepository {
@@ -25,58 +26,24 @@ func NewEventRepository(conn driver.Conn) *EventRepository {
 	}
 }
 
-func (c *EventRepository) InsertEvent(ctx context.Context, e analytics.Event) error {
-	err := c.conn.Exec(
-		ctx,
-		`INSERT INTO events (
-			timestamp,
-			domain,
-			kind,
-			pathname
-		) VALUES (?, ?, ?, ?)`,
-		e.Timestamp,
-		e.Domain,
-		e.Kind,
-		e.Pathname,
-	)
-
-	if err != nil {
-		return err
+func marshalEvent(event analytics.Event) EventModel {
+	return EventModel{
+		Timestamp: event.Timestamp,
+		Domain: event.Domain,
+		Kind: event.Kind,
+		Pathname: event.Pathname,
+		UserId: event.UserId,
 	}
-
-	return nil;
 }
 
-func (c *EventRepository) AsyncInsertEvent(ctx context.Context, e analytics.Event) error {
-	err := c.conn.AsyncInsert(
-		ctx,
-		`INSERT INTO events (
-			timestamp,
-			domain,
-			kind,
-			pathname
-		) VALUES (?, ?, ?, ?)`,
-		false,
-		e.Timestamp,
-		e.Domain,
-		e.Kind,
-		e.Pathname,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil;
-}
-
-func (c *EventRepository) BatchInsertEvent(ctx context.Context, e []analytics.Event) error {
+func (c *EventRepository) BatchInsertEvent(ctx context.Context, events []analytics.Event) error {
 	batch, err := c.conn.PrepareBatch(ctx,
 		`INSERT INTO events (
 			timestamp,
 			domain,
 			kind,
-			pathname
+			pathname,
+		    user_id
 		)`,
 	)
 	if err != nil {
@@ -84,13 +51,9 @@ func (c *EventRepository) BatchInsertEvent(ctx context.Context, e []analytics.Ev
 	}
 	defer batch.Close()
 
-	for _, evt := range e {
-		err := batch.Append(
-			evt.Timestamp,
-			evt.Domain,
-			evt.Kind,
-			evt.Pathname,
-		)
+	for _, event := range events {
+		model := marshalEvent(event)	
+		err := batch.AppendStruct(&model)
 		if err != nil {
 			return err
 		}

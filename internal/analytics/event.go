@@ -37,6 +37,7 @@ func (e Event) LogValue() slog.Value {
 		slog.String("domain", e.Domain),
 		slog.String("kind", e.Kind),
 		slog.String("pathname", e.Pathname),
+		slog.Uint64("user_id", e.UserId),
 	)
 }
 
