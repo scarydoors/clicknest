@@ -105,6 +105,7 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 }
 
 func (s *Service) handleEventFlush(ctx context.Context, events []analytics.Event) error {
+	s.logger.Info("flushing events to storage", slog.Int("eventCount", len(events)))
 	if err := s.storage.BatchInsertEvent(ctx, events); err != nil {
 		return err
 	}
