@@ -19,12 +19,8 @@ type bufferedExecutor[T any] struct {
 	errorCallback func(context.Context, error)
 
 	flushGroup singleflight.Group
-	buf []T
 	itemCh chan T
-	timer <-chan time.Time
-	readyCh chan struct{}
-
-	ctx context.Context
+	ticker *time.Ticker
 }
 
 func newBufferedExecutor[T any](
@@ -36,76 +32,68 @@ func newBufferedExecutor[T any](
 		config: config,
 		execCallback: execCallback,
 		errorCallback: errorCallback,
-
-		buf: make([]T, 0, config.Limit),
 		itemCh: make(chan T, config.Limit),
-		readyCh: make(chan struct{}),
+		ticker: time.NewTicker(config.Interval),
 	}
 }
 
 func (b *bufferedExecutor[T]) run(ctx context.Context) error {
 	defer close(b.itemCh)
 
-	b.resetTimer()
-
-	b.ctx = ctx
-	close(b.readyCh)
-
 	for {
 		select {
-		case <-b.ctx.Done():
-			return b.ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 
-		case <-b.timer:
-			flushCtx, cancel := b.flushContext()
-			defer cancel()
-			b.flush(flushCtx)
-		}
-	}
-}
-
-func (b *bufferedExecutor[T]) resetTimer() {
-	b.timer = time.After(b.config.Interval)
-}
-
-func (b *bufferedExecutor[T]) push(item T) error {
-	<-b.readyCh
-
-	for {
-		select {
-		case <-b.ctx.Done():
-			return b.ctx.Err()
-		case b.itemCh <- item:
-			return nil
-		default:
-			ctx, cancel := b.flushContext()
-			defer cancel()
+		case <-b.ticker.C:
 			b.flush(ctx)
 		}
 	}
 }
 
-func (b *bufferedExecutor[T]) flushContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.WithoutCancel(b.ctx), b.config.Timeout)
+func (b *bufferedExecutor[T]) push(ctx context.Context, item T) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case b.itemCh <- item:
+			return nil
+		default:
+			b.flush(ctx)
+		}
+	}
 }
 
 func (b *bufferedExecutor[T]) flush(ctx context.Context) {
 	b.flushGroup.Do("flush", func() (any, error) {
-		defer b.resetTimer()
-
-		if len(b.itemCh) == 0 {
-			return nil, nil
-		}
-
-		for len(b.itemCh) > 0 && len(b.buf) < b.config.Limit {
-			b.buf = append(b.buf, <-b.itemCh)	
-		}
-
-		if err := b.execCallback(ctx, b.buf); err != nil {
-			b.errorCallback(ctx, err)
-		}
-
-		b.buf = b.buf[:0]
-		return nil, nil
+		flushContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), b.config.Timeout)
+		defer cancel()
+		return b.doFlush(flushContext)
 	})
+}
+
+func (b *bufferedExecutor[T]) finalFlush(ctx context.Context) {
+	b.flushGroup.Do("flush", func() (any, error) {
+		return b.doFlush(ctx)
+	})
+}
+
+func (b *bufferedExecutor[T]) doFlush(ctx context.Context) (any, error) {
+	b.ticker.Stop()
+	defer b.ticker.Reset(b.config.Interval)
+
+	buf := make([]T, 0, len(b.itemCh))
+	if len(b.itemCh) == 0 {
+		return nil, nil
+	}
+
+	for len(b.itemCh) > 0 && len(buf) < b.config.Limit {
+		buf = append(buf, <-b.itemCh)	
+	}
+
+	if err := b.execCallback(ctx, buf); err != nil {
+		b.errorCallback(ctx, err)
+	}
+
+	return nil, nil
 }

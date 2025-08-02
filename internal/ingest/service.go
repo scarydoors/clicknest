@@ -95,7 +95,7 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 	}
 
 
-	if err := s.eventWriter.push(event); err != nil {
+	if err := s.eventWriter.push(ctx, event); err != nil {
 		return fmt.Errorf("push event: %w", err)
 	}
 
