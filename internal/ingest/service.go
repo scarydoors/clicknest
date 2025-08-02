@@ -10,22 +10,24 @@ import (
 )
 
 type Service struct {
-	storage Storage
+	eventStorage Storage[analytics.Event]
+	sessionStorage Storage[analytics.Session]
 	logger *slog.Logger
 
+	eventWriter *batchBuffer[analytics.Event]
+	sessionWriter *batchBuffer[analytics.Session]
 	writerCancel context.CancelFunc
-	eventWriter *bufferedExecutor[analytics.Event]
-	sessionWriter *bufferedExecutor[analytics.Session]
 	writerWg sync.WaitGroup
 }
 
-type Storage interface {
-	BatchInsertEvent(context.Context, []analytics.Event) error
+type Storage[T any] interface {
+	BatchInsert(context.Context, []T) error
 }
 
-func NewService(storage Storage, logger *slog.Logger) *Service {
+func NewService(eventStorage Storage[analytics.Event], sessionStorage Storage[analytics.Session], logger *slog.Logger) *Service {
 	return &Service{
-		storage: storage,
+		eventStorage: eventStorage,
+		sessionStorage: sessionStorage,
 		logger: logger,
 	}	
 }
@@ -35,8 +37,8 @@ type runner interface {
 }
 
 func (s *Service) StartWorkers(config FlushConfig) error {
-	eventWriter := newBufferedExecutor(s.handleEventFlush, s.createWriterErrorHandler("event"), config)
-	sessionWriter := newBufferedExecutor(s.handleSessionFlush, s.createWriterErrorHandler("session"), config)
+	eventWriter := newBatchBuffer(s.eventStorage, s.createWriterErrorHandler("event"), config)
+	sessionWriter := newBatchBuffer(s.sessionStorage, s.createWriterErrorHandler("session"), config)
 
 	runners := [2]runner{
 		eventWriter,
@@ -80,8 +82,8 @@ func (s *Service) ShutdownWorkers(ctx context.Context) error {
 	case <-done:
 	}
 
-	s.eventWriter.flush(ctx)
-	s.sessionWriter.flush(ctx)
+	s.eventWriter.finalFlush(ctx)
+	s.sessionWriter.finalFlush(ctx)
 
 	return nil
 }
@@ -99,19 +101,6 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 		return fmt.Errorf("push event: %w", err)
 	}
 
-	return nil
-}
-
-func (s *Service) handleEventFlush(ctx context.Context, events []analytics.Event) error {
-	s.logger.Info("flushing events to storage", slog.Int("eventCount", len(events)))
-	if err := s.storage.BatchInsertEvent(ctx, events); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) handleSessionFlush(ctx context.Context, sessions []analytics.Session) error {
 	return nil
 }
 

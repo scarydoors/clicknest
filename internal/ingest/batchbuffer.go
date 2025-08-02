@@ -13,31 +13,32 @@ type FlushConfig struct {
 	Limit int
 }
 
-type bufferedExecutor[T any] struct {
-	config FlushConfig
-	execCallback func(context.Context, []T) error
+type batchBuffer[T any] struct {
+	storage Storage[T]
 	errorCallback func(context.Context, error)
+	config FlushConfig
 
 	flushGroup singleflight.Group
 	itemCh chan T
 	ticker *time.Ticker
 }
 
-func newBufferedExecutor[T any](
-	execCallback func(context.Context, []T) error,
+func newBatchBuffer[T any](
+	storage Storage[T],
 	errorCallback func(context.Context, error),
 	config FlushConfig,
-) *bufferedExecutor[T] {
-	return &bufferedExecutor[T]{
+) *batchBuffer[T] {
+	return &batchBuffer[T]{
+		storage: storage,
 		config: config,
-		execCallback: execCallback,
 		errorCallback: errorCallback,
+
 		itemCh: make(chan T, config.Limit),
 		ticker: time.NewTicker(config.Interval),
 	}
 }
 
-func (b *bufferedExecutor[T]) run(ctx context.Context) error {
+func (b *batchBuffer[T]) run(ctx context.Context) error {
 	defer close(b.itemCh)
 
 	for {
@@ -51,7 +52,7 @@ func (b *bufferedExecutor[T]) run(ctx context.Context) error {
 	}
 }
 
-func (b *bufferedExecutor[T]) push(ctx context.Context, item T) error {
+func (b *batchBuffer[T]) push(ctx context.Context, item T) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -64,7 +65,7 @@ func (b *bufferedExecutor[T]) push(ctx context.Context, item T) error {
 	}
 }
 
-func (b *bufferedExecutor[T]) flush(ctx context.Context) {
+func (b *batchBuffer[T]) flush(ctx context.Context) {
 	b.flushGroup.Do("flush", func() (any, error) {
 		flushContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), b.config.Timeout)
 		defer cancel()
@@ -72,26 +73,27 @@ func (b *bufferedExecutor[T]) flush(ctx context.Context) {
 	})
 }
 
-func (b *bufferedExecutor[T]) finalFlush(ctx context.Context) {
+func (b *batchBuffer[T]) finalFlush(ctx context.Context) {
 	b.flushGroup.Do("flush", func() (any, error) {
 		return b.doFlush(ctx)
 	})
 }
 
-func (b *bufferedExecutor[T]) doFlush(ctx context.Context) (any, error) {
+func (b *batchBuffer[T]) doFlush(ctx context.Context) (any, error) {
 	b.ticker.Stop()
 	defer b.ticker.Reset(b.config.Interval)
 
-	buf := make([]T, 0, len(b.itemCh))
 	if len(b.itemCh) == 0 {
 		return nil, nil
 	}
 
-	for len(b.itemCh) > 0 && len(buf) < b.config.Limit {
+	count := min(len(b.itemCh), b.config.Limit)
+	buf := make([]T, 0, count)
+	for range count {
 		buf = append(buf, <-b.itemCh)	
 	}
 
-	if err := b.execCallback(ctx, buf); err != nil {
+	if err := b.storage.BatchInsert(ctx, buf); err != nil {
 		b.errorCallback(ctx, err)
 	}
 

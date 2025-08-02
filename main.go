@@ -36,9 +36,10 @@ func main() {
 
 	defer clickhouseDB.Close()
 
-	eventRepo := clickhouse.NewEventRepository(clickhouseDB)
+	eventRepo := clickhouse.NewEventRepository(clickhouseDB, logger)
+	sessionRepo := clickhouse.NewSessionRepository(clickhouseDB, logger)
 
-	ingestService := ingest.NewService(eventRepo, logger)
+	ingestService := ingest.NewService(eventRepo, sessionRepo, logger)
 	ingestService.StartWorkers(ingest.FlushConfig{
 		Interval: 4 * time.Second,
 		Limit: 100000,

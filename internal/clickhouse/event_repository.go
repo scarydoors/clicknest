@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -10,6 +11,7 @@ import (
 
 type EventRepository struct {
 	conn driver.Conn
+	logger *slog.Logger
 }
 
 type EventModel struct {
@@ -21,9 +23,10 @@ type EventModel struct {
 	Pathname string `ch:"pathname"`
 }
 
-func NewEventRepository(conn driver.Conn) *EventRepository {
+func NewEventRepository(conn driver.Conn, logger *slog.Logger) *EventRepository {
 	return &EventRepository{
 		conn: conn,
+		logger: logger,
 	}
 }
 
@@ -38,7 +41,7 @@ func marshalEvent(event analytics.Event) EventModel {
 	}
 }
 
-func (c *EventRepository) BatchInsertEvent(ctx context.Context, events []analytics.Event) error {
+func (c *EventRepository) BatchInsert(ctx context.Context, events []analytics.Event) error {
 	batch, err := c.conn.PrepareBatch(ctx,
 		`INSERT INTO events (
 			timestamp,
@@ -62,5 +65,6 @@ func (c *EventRepository) BatchInsertEvent(ctx context.Context, events []analyti
 		}
 	}
 
+	c.logger.Info("batch inserted events", slog.Int("count", len(events)))
 	return batch.Send()
 }
