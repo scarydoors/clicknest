@@ -11,11 +11,11 @@ const EventKindPageview = "pageview"
 
 type Event struct {
 	Timestamp time.Time
-	Domain string
-	Kind string
+	Domain    string
+	Kind      string
 	SessionId uint64
-	UserId uint64
-	Pathname string
+	UserId    uint64
+	Pathname  string
 }
 
 func NewEvent(timestamp time.Time, domain, kind, rawUrl string) (Event, error) {
@@ -26,9 +26,9 @@ func NewEvent(timestamp time.Time, domain, kind, rawUrl string) (Event, error) {
 
 	return Event{
 		Timestamp: timestamp,
-		Domain: domain,
-		Kind: kind,
-		Pathname: parsed.pathname,
+		Domain:    domain,
+		Kind:      kind,
+		Pathname:  parsed.pathname,
 	}, nil
 }
 

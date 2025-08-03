@@ -10,14 +10,14 @@ import (
 )
 
 type Service struct {
-	eventStorage Storage[analytics.Event]
+	eventStorage   Storage[analytics.Event]
 	sessionStorage Storage[analytics.Session]
-	logger *slog.Logger
+	logger         *slog.Logger
 
-	eventWriter *batchBuffer[analytics.Event]
+	eventWriter   *batchBuffer[analytics.Event]
 	sessionWriter *batchBuffer[analytics.Session]
-	writerCancel context.CancelFunc
-	writerWg sync.WaitGroup
+	writerCancel  context.CancelFunc
+	writerWg      sync.WaitGroup
 }
 
 type Storage[T any] interface {
@@ -26,10 +26,10 @@ type Storage[T any] interface {
 
 func NewService(eventStorage Storage[analytics.Event], sessionStorage Storage[analytics.Session], logger *slog.Logger) *Service {
 	return &Service{
-		eventStorage: eventStorage,
+		eventStorage:   eventStorage,
 		sessionStorage: sessionStorage,
-		logger: logger,
-	}	
+		logger:         logger,
+	}
 }
 
 const eventWriterName = "event"
@@ -41,7 +41,7 @@ type writer interface {
 }
 
 type worker struct {
-	name string
+	name   string
 	writer writer
 }
 
@@ -84,7 +84,7 @@ func (s *Service) ShutdownWorkers(ctx context.Context) error {
 
 	s.writerCancel()
 
-	done := make(chan struct{})	
+	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		s.writerWg.Wait()
@@ -95,7 +95,7 @@ func (s *Service) ShutdownWorkers(ctx context.Context) error {
 		return fmt.Errorf("unable to perform final flush: %w", ctx.Err())
 	case <-done:
 	}
-	
+
 	workers := []worker{
 		{eventWriterName, s.eventWriter},
 		{sessionWriterName, s.sessionWriter},
@@ -103,10 +103,10 @@ func (s *Service) ShutdownWorkers(ctx context.Context) error {
 
 	var wg sync.WaitGroup
 	for _, worker := range workers {
-		wg.Add(1)	
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := worker.writer.finalFlush(ctx); err != nil{
+			if err := worker.writer.finalFlush(ctx); err != nil {
 				s.logger.Error("worker final flush encountered an error", slog.String("name", worker.name), slog.Any("error", err))
 			} else {
 				s.logger.Info("worker final flush gracefully completed", slog.String("name", worker.name))
@@ -125,7 +125,6 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 	if s.sessionWriter == nil {
 		return fmt.Errorf("session worker not running")
 	}
-
 
 	if err := s.eventWriter.push(ctx, event); err != nil {
 		return fmt.Errorf("push event: %w", err)

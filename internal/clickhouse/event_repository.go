@@ -12,22 +12,22 @@ import (
 )
 
 type EventRepository struct {
-	conn driver.Conn
+	conn   driver.Conn
 	logger *slog.Logger
 }
 
 type EventModel struct {
 	Timestamp time.Time `ch:"timestamp"`
-	Domain string `ch:"domain"`
-	Kind string `ch:"kind"`
-	SessionId uint64 `ch:"session_id"`
-	UserId uint64 `ch:"user_id"`
-	Pathname string `ch:"pathname"`
+	Domain    string    `ch:"domain"`
+	Kind      string    `ch:"kind"`
+	SessionId uint64    `ch:"session_id"`
+	UserId    uint64    `ch:"user_id"`
+	Pathname  string    `ch:"pathname"`
 }
 
 func NewEventRepository(conn driver.Conn, logger *slog.Logger) *EventRepository {
 	return &EventRepository{
-		conn: conn,
+		conn:   conn,
 		logger: logger,
 	}
 }
@@ -35,11 +35,11 @@ func NewEventRepository(conn driver.Conn, logger *slog.Logger) *EventRepository 
 func marshalEvent(event analytics.Event) EventModel {
 	return EventModel{
 		Timestamp: event.Timestamp,
-		Domain: event.Domain,
-		Kind: event.Kind,
+		Domain:    event.Domain,
+		Kind:      event.Kind,
 		SessionId: event.SessionId,
-		UserId: event.UserId,
-		Pathname: event.Pathname,
+		UserId:    event.UserId,
+		Pathname:  event.Pathname,
 	}
 }
 
@@ -58,9 +58,9 @@ func (c *EventRepository) BatchInsert(ctx context.Context, events []analytics.Ev
 		return err
 	}
 	defer errorutil.DeferErrf(&err, "batch close: %w", batch.Close)
-	
+
 	for _, event := range events {
-		model := marshalEvent(event)	
+		model := marshalEvent(event)
 		err := batch.AppendStruct(&model)
 		if err != nil {
 			return err
@@ -72,5 +72,5 @@ func (c *EventRepository) BatchInsert(ctx context.Context, events []analytics.Ev
 		return fmt.Errorf("batch send: %w", err)
 	}
 
-	return nil;
+	return nil
 }

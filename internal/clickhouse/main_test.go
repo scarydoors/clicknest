@@ -49,12 +49,12 @@ func TestMain(m *testing.M) {
 		log.Printf("connection host: %s", err)
 	}
 	split := strings.Split(host, ":")
-	
+
 	config := clickhouse.ClickhouseDBConfig{
-		Host: split[0],
-		Port: split[1],
+		Host:     split[0],
+		Port:     split[1],
 		Database: dbname,
-		Username: user, 
+		Username: user,
 		Password: password,
 	}
 

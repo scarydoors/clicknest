@@ -16,7 +16,6 @@ import (
 	"github.com/scarydoors/clicknest/internal/server"
 )
 
-
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
@@ -24,8 +23,8 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	clickhouseDB, err := clickhouse.NewClickhouseConn(ctx, clickhouse.ClickhouseDBConfig{
-		Host: "localhost",
-		Port: "9000",
+		Host:     "localhost",
+		Port:     "9000",
 		Database: "default",
 		Username: "default",
 		Password: "",
@@ -43,15 +42,15 @@ func main() {
 	ingestService := ingest.NewService(eventRepo, sessionRepo, logger)
 	if err := ingestService.StartWorkers(ingest.FlushConfig{
 		Interval: 4 * time.Second,
-		Limit: 100000,
-		Timeout: 10 * time.Second,
+		Limit:    100000,
+		Timeout:  10 * time.Second,
 	}); err != nil {
 		log.Fatalf("unable to start ingest workers: %s", err)
 	}
 	srv := server.NewServer(logger, ingestService)
 
 	httpServer := http.Server{
-		Addr: ":6969",
+		Addr:    ":6969",
 		Handler: srv,
 	}
 
@@ -71,7 +70,7 @@ func main() {
 		defer close(done)
 		<-ctx.Done()
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {

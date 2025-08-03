@@ -32,8 +32,8 @@ func TestBatchBuffer_FinalFlushClearsOutAllItems(t *testing.T) {
 	writer := newBatchBuffer(storage, nil, FlushConfig{
 		// never flush using the time
 		Interval: 24 * time.Hour,
-		Timeout: 24 * time.Hour,
-		Limit: limit,
+		Timeout:  24 * time.Hour,
+		Limit:    limit,
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -44,10 +44,10 @@ func TestBatchBuffer_FinalFlushClearsOutAllItems(t *testing.T) {
 	}()
 
 	const pushCount = (limit * 3) + limit - 1
-	
+
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func () {
+	go func() {
 		defer wg.Done()
 		for pushNo := range pushCount {
 			wg.Add(1)

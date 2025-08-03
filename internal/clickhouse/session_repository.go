@@ -12,38 +12,38 @@ import (
 )
 
 type SessionRepository struct {
-	conn driver.Conn
+	conn   driver.Conn
 	logger *slog.Logger
 }
 
 type SessionModel struct {
-	Start time.Time `ch:"start"`
-	End time.Time `ch:"end"`
-	Domain string `ch:"domain"`
-	Duration uint32 `ch:"duration"`
-	EventCount uint32 `ch:"event_count"`
-	SessionId uint64 `ch:"session_id"`
-	UserId uint64 `ch:"user_id"`
-	Sign int8 `ch:"sign"`
+	Start      time.Time `ch:"start"`
+	End        time.Time `ch:"end"`
+	Domain     string    `ch:"domain"`
+	Duration   uint32    `ch:"duration"`
+	EventCount uint32    `ch:"event_count"`
+	SessionId  uint64    `ch:"session_id"`
+	UserId     uint64    `ch:"user_id"`
+	Sign       int8      `ch:"sign"`
 }
 
 func NewSessionRepository(conn driver.Conn, logger *slog.Logger) *SessionRepository {
 	return &SessionRepository{
-		conn: conn,
+		conn:   conn,
 		logger: logger,
 	}
 }
 
 func marshalSession(session analytics.Session) SessionModel {
 	return SessionModel{
-		Start: session.Start,
-		End: session.End,
-		Domain: session.Domain,
-		Duration: session.Duration,
+		Start:      session.Start,
+		End:        session.End,
+		Domain:     session.Domain,
+		Duration:   session.Duration,
 		EventCount: session.EventCount,
-		SessionId: session.SessionId,
-		UserId: session.UserId,
-		Sign: session.Sign,
+		SessionId:  session.SessionId,
+		UserId:     session.UserId,
+		Sign:       session.Sign,
 	}
 }
 
@@ -66,7 +66,7 @@ func (c *SessionRepository) BatchInsert(ctx context.Context, sessions []analytic
 	defer errorutil.DeferErrf(&err, "batch close: %w", batch.Close)
 
 	for _, session := range sessions {
-		model := marshalSession(session)	
+		model := marshalSession(session)
 		err := batch.AppendStruct(&model)
 		if err != nil {
 			return err
@@ -78,5 +78,5 @@ func (c *SessionRepository) BatchInsert(ctx context.Context, sessions []analytic
 		return fmt.Errorf("batch send: %w", err)
 	}
 
-	return nil;
+	return nil
 }

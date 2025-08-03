@@ -10,8 +10,8 @@ import (
 )
 
 type ClickhouseDBConfig struct {
-	Host string
-	Port string
+	Host     string
+	Port     string
 	Database string
 	Username string
 	Password string

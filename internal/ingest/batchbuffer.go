@@ -9,18 +9,18 @@ import (
 
 type FlushConfig struct {
 	Interval time.Duration
-	Timeout time.Duration
-	Limit int
+	Timeout  time.Duration
+	Limit    int
 }
 
 type batchBuffer[T any] struct {
-	storage Storage[T]
+	storage       Storage[T]
 	errorCallback func(context.Context, error)
-	config FlushConfig
+	config        FlushConfig
 
 	flushSf singleflight.Group
-	itemCh chan T
-	ticker *time.Ticker
+	itemCh  chan T
+	ticker  *time.Ticker
 }
 
 func newBatchBuffer[T any](
@@ -29,8 +29,8 @@ func newBatchBuffer[T any](
 	config FlushConfig,
 ) *batchBuffer[T] {
 	return &batchBuffer[T]{
-		storage: storage,
-		config: config,
+		storage:       storage,
+		config:        config,
 		errorCallback: errorCallback,
 
 		itemCh: make(chan T, config.Limit),
@@ -97,7 +97,7 @@ func (b *batchBuffer[T]) doFlush(ctx context.Context) error {
 	count := min(len(b.itemCh), b.config.Limit)
 	buf := make([]T, 0, count)
 	for range count {
-		buf = append(buf, <-b.itemCh)	
+		buf = append(buf, <-b.itemCh)
 	}
 
 	if err := b.storage.BatchInsert(ctx, buf); err != nil {
