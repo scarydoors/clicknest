@@ -18,7 +18,7 @@ type batchBuffer[T any] struct {
 	errorCallback func(context.Context, error)
 	config FlushConfig
 
-	flushGroup singleflight.Group
+	flushSf singleflight.Group
 	itemCh chan T
 	ticker *time.Ticker
 }
@@ -66,25 +66,32 @@ func (b *batchBuffer[T]) push(ctx context.Context, item T) error {
 }
 
 func (b *batchBuffer[T]) flush(ctx context.Context) {
-	b.flushGroup.Do("flush", func() (any, error) {
+	_, _, _ = b.flushSf.Do("flush", func() (any, error) {
 		flushContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), b.config.Timeout)
 		defer cancel()
-		return b.doFlush(flushContext)
+		err := b.doFlush(flushContext)
+		if err != nil && b.errorCallback != nil {
+			b.errorCallback(flushContext, err)
+		}
+		return nil, nil
 	})
 }
 
-func (b *batchBuffer[T]) finalFlush(ctx context.Context) {
-	b.flushGroup.Do("flush", func() (any, error) {
-		return b.doFlush(ctx)
+func (b *batchBuffer[T]) finalFlush(ctx context.Context) error {
+	_, err, _ := b.flushSf.Do("flush", func() (any, error) {
+		err := b.doFlush(ctx)
+		b.ticker.Stop()
+		return nil, err
 	})
+	return err
 }
 
-func (b *batchBuffer[T]) doFlush(ctx context.Context) (any, error) {
+func (b *batchBuffer[T]) doFlush(ctx context.Context) error {
 	b.ticker.Stop()
 	defer b.ticker.Reset(b.config.Interval)
 
 	if len(b.itemCh) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	count := min(len(b.itemCh), b.config.Limit)
@@ -94,8 +101,8 @@ func (b *batchBuffer[T]) doFlush(ctx context.Context) (any, error) {
 	}
 
 	if err := b.storage.BatchInsert(ctx, buf); err != nil {
-		b.errorCallback(ctx, err)
+		return err
 	}
 
-	return nil, nil
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/scarydoors/clicknest/internal/clickhouse"
+	"github.com/scarydoors/clicknest/internal/errorutil"
 	"github.com/scarydoors/clicknest/internal/ingest"
 	"github.com/scarydoors/clicknest/internal/server"
 )
@@ -34,17 +35,19 @@ func main() {
 		log.Fatalf("failed clickhouse init: %s", err)
 	}
 
-	defer clickhouseDB.Close()
+	defer errorutil.DeferIgnoreErr(clickhouseDB.Close)
 
 	eventRepo := clickhouse.NewEventRepository(clickhouseDB, logger)
 	sessionRepo := clickhouse.NewSessionRepository(clickhouseDB, logger)
 
 	ingestService := ingest.NewService(eventRepo, sessionRepo, logger)
-	ingestService.StartWorkers(ingest.FlushConfig{
+	if err := ingestService.StartWorkers(ingest.FlushConfig{
 		Interval: 4 * time.Second,
 		Limit: 100000,
 		Timeout: 10 * time.Second,
-	})
+	}); err != nil {
+		log.Fatalf("unable to start ingest workers: %s", err)
+	}
 	srv := server.NewServer(logger, ingestService)
 
 	httpServer := http.Server{

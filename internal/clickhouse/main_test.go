@@ -11,6 +11,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/pressly/goose/v3"
 	"github.com/scarydoors/clicknest/internal/clickhouse"
+	"github.com/scarydoors/clicknest/internal/errorutil"
 	"github.com/testcontainers/testcontainers-go"
 	clickhousetc "github.com/testcontainers/testcontainers-go/modules/clickhouse"
 )
@@ -69,7 +70,7 @@ func TestMain(m *testing.M) {
 
 	// Run migrations
 	goose.SetLogger(goose.NopLogger())
-	goose.SetDialect("clickhouse")
+	_ = goose.SetDialect("clickhouse")
 	if err := goose.Up(db, "../../migrations"); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
@@ -79,7 +80,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Printf("new clickhouse db: %s", err)
 	}
-	defer clickhouseDB.Close()
+	defer errorutil.DeferIgnoreErr(clickhouseDB.Close)
 
 	m.Run()
 }

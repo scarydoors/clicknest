@@ -2,11 +2,13 @@ package clickhouse
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/scarydoors/clicknest/internal/analytics"
+	"github.com/scarydoors/clicknest/internal/errorutil"
 )
 
 type SessionRepository struct {
@@ -61,7 +63,7 @@ func (c *SessionRepository) BatchInsert(ctx context.Context, sessions []analytic
 	if err != nil {
 		return err
 	}
-	defer batch.Close()
+	defer errorutil.DeferErrf(&err, "batch close: %w", batch.Close)
 
 	for _, session := range sessions {
 		model := marshalSession(session)	
@@ -72,5 +74,9 @@ func (c *SessionRepository) BatchInsert(ctx context.Context, sessions []analytic
 	}
 
 	c.logger.Info("batch inserted sessions", slog.Int("count", len(sessions)))
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return fmt.Errorf("batch send: %w", err)
+	}
+
+	return nil;
 }

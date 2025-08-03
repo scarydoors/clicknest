@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -31,8 +32,11 @@ func NewClickhouseConn(context context.Context, config ClickhouseDBConfig) (driv
 	}
 
 	if err := conn.Ping(context); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("ping: %w", err)
+		cerr := conn.Close()
+		if cerr != nil {
+			cerr = fmt.Errorf("conn close: %w", cerr)
+		}
+		return nil, errors.Join(fmt.Errorf("ping: %w", err), cerr)
 	}
 
 	return conn, nil

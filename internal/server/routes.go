@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/scarydoors/clicknest/internal/analytics"
+	"github.com/scarydoors/clicknest/internal/errorutil"
 	"github.com/scarydoors/clicknest/internal/ingest"
 )
 
@@ -24,7 +25,7 @@ type EventRequest struct {
 func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			defer r.Body.Close()
+			defer errorutil.DeferIgnoreErr(r.Body.Close)
 
 			ctx := r.Context()
 
