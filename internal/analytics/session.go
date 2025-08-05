@@ -12,8 +12,8 @@ type Session struct {
 	Domain     string
 	Duration   uint32
 	EventCount uint32
-	SessionId  uint64
-	UserId     uint64
+	SessionID  uint64
+	UserID     uint64
 	Sign       int8
 }
 
@@ -24,13 +24,13 @@ func FromEvent(event Event) Session {
 		Domain:     event.Domain,
 		Duration:   0,
 		EventCount: 1,
-		SessionId:  generateSessionId(),
-		UserId:     event.UserId,
+		SessionID:  generateSessionID(),
+		UserID:     event.UserID,
 		Sign:       1,
 	}
 }
 
-func generateSessionId() uint64 {
+func generateSessionID() uint64 {
 	var b [8]byte
 	_, err := rand.Read(b[:])
 	if err != nil {

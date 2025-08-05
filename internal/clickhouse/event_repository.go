@@ -20,8 +20,8 @@ type EventModel struct {
 	Timestamp time.Time `ch:"timestamp"`
 	Domain    string    `ch:"domain"`
 	Kind      string    `ch:"kind"`
-	SessionId uint64    `ch:"session_id"`
-	UserId    uint64    `ch:"user_id"`
+	SessionID uint64    `ch:"session_id"`
+	UserID    uint64    `ch:"user_id"`
 	Pathname  string    `ch:"pathname"`
 }
 
@@ -37,8 +37,8 @@ func marshalEvent(event analytics.Event) EventModel {
 		Timestamp: event.Timestamp,
 		Domain:    event.Domain,
 		Kind:      event.Kind,
-		SessionId: event.SessionId,
-		UserId:    event.UserId,
+		SessionID: event.SessionID,
+		UserID:    event.UserID,
 		Pathname:  event.Pathname,
 	}
 }

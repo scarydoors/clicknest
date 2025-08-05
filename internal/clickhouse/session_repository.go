@@ -22,8 +22,8 @@ type SessionModel struct {
 	Domain     string    `ch:"domain"`
 	Duration   uint32    `ch:"duration"`
 	EventCount uint32    `ch:"event_count"`
-	SessionId  uint64    `ch:"session_id"`
-	UserId     uint64    `ch:"user_id"`
+	SessionID  uint64    `ch:"session_id"`
+	UserID     uint64    `ch:"user_id"`
 	Sign       int8      `ch:"sign"`
 }
 
@@ -41,8 +41,8 @@ func marshalSession(session analytics.Session) SessionModel {
 		Domain:     session.Domain,
 		Duration:   session.Duration,
 		EventCount: session.EventCount,
-		SessionId:  session.SessionId,
-		UserId:     session.UserId,
+		SessionID:  session.SessionID,
+		UserID:     session.UserID,
 		Sign:       session.Sign,
 	}
 }

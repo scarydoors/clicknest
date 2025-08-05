@@ -16,6 +16,7 @@ type Service struct {
 
 	eventWriter   *batchBuffer[analytics.Event]
 	sessionWriter *batchBuffer[analytics.Session]
+
 	writerCancel  context.CancelFunc
 	writerWg      sync.WaitGroup
 }
