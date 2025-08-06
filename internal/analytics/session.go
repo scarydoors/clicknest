@@ -1,10 +1,15 @@
 package analytics
 
 import (
-	"crypto/rand"
-	"encoding/binary"
+	"math/rand/v2"
 	"time"
 )
+
+type SessionID uint64
+
+func NewSessionID() SessionID {
+	return SessionID(rand.Uint64())
+}
 
 type Session struct {
 	Start      time.Time
@@ -12,8 +17,8 @@ type Session struct {
 	Domain     string
 	Duration   uint32
 	EventCount uint32
-	SessionID  uint64
-	UserID     uint64
+	SessionID  SessionID
+	UserID     UserID
 	Sign       int8
 }
 
@@ -24,18 +29,8 @@ func FromEvent(event Event) Session {
 		Domain:     event.Domain,
 		Duration:   0,
 		EventCount: 1,
-		SessionID:  generateSessionID(),
+		SessionID:  NewSessionID(),
 		UserID:     event.UserID,
 		Sign:       1,
 	}
-}
-
-func generateSessionID() uint64 {
-	var b [8]byte
-	_, err := rand.Read(b[:])
-	if err != nil {
-		panic(err)
-	}
-
-	return binary.LittleEndian.Uint64(b[:])
 }

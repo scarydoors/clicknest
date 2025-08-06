@@ -14,7 +14,7 @@ type Event struct {
 	Domain    string
 	Kind      string
 	SessionID uint64
-	UserID    uint64
+	UserID    UserID
 	Pathname  string
 }
 
@@ -38,7 +38,7 @@ func (e Event) LogValue() slog.Value {
 		slog.String("domain", e.Domain),
 		slog.String("kind", e.Kind),
 		slog.Uint64("session_id", e.SessionID),
-		slog.Uint64("user_id", e.UserID),
+		slog.Any("user_id", e.UserID),
 		slog.String("pathname", e.Pathname),
 	)
 }

@@ -3,6 +3,7 @@ package sessionstore
 import (
 	"time"
 
+	"github.com/scarydoors/clicknest/internal/analytics"
 	"github.com/scarydoors/clicknest/internal/cache"
 )
 
@@ -10,19 +11,19 @@ const SessionTtl = 30 * time.Minute
 const SessionCheckInterval = 1 * time.Minute
 
 type Store struct {
-	cache *cache.Cache[uint64, Entry]
+	cache *cache.Cache[analytics.UserID, Entry]
 }
 
 type Entry struct {
-	sessionID uint64
-	start time.Time
-	end time.Time
+	SessionID analytics.SessionID
+	Start time.Time
+	End time.Time
 }
 
 
 func NewSessionStore() *Store {
 	return &Store{
-		cache: cache.NewCache[uint64, Entry](SessionTtl, SessionCheckInterval),
+		cache: cache.NewCache[analytics.UserID, Entry](SessionTtl, SessionCheckInterval),
 	}
 }
 
