@@ -1,4 +1,4 @@
-package ingest
+package batchbuffer_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/scarydoors/clicknest/internal/batchbuffer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,7 +30,7 @@ func TestBatchBuffer_FinalFlushClearsOutAllItems(t *testing.T) {
 	}
 
 	const limit = 10
-	writer := newBatchBuffer(storage, nil, FlushConfig{
+	writer := batchbuffer.NewBatchBuffer(storage, nil, batchbuffer.FlushConfig{
 		// never flush using the time
 		Interval: 24 * time.Hour,
 		Timeout:  24 * time.Hour,

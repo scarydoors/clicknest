@@ -1,4 +1,4 @@
-package ingest
+package batchbuffer
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type FlushConfig struct {
 	Limit    int
 }
 
-type batchBuffer[T any] struct {
+type BatchBuffer[T any] struct {
 	storage       Storage[T]
 	errorCallback func(context.Context, error)
 	config        FlushConfig
@@ -23,12 +23,16 @@ type batchBuffer[T any] struct {
 	ticker  *time.Ticker
 }
 
-func newBatchBuffer[T any](
+type Storage[T any] interface {
+	BatchInsert(context.Context, []T) error
+}
+
+func NewBatchBuffer[T any](
 	storage Storage[T],
 	errorCallback func(context.Context, error),
 	config FlushConfig,
-) *batchBuffer[T] {
-	return &batchBuffer[T]{
+) *BatchBuffer[T] {
+	return &BatchBuffer[T]{
 		storage:       storage,
 		config:        config,
 		errorCallback: errorCallback,
@@ -38,7 +42,7 @@ func newBatchBuffer[T any](
 	}
 }
 
-func (b *batchBuffer[T]) run(ctx context.Context) error {
+func (b *BatchBuffer[T]) Run(ctx context.Context) error {
 	defer close(b.itemCh)
 
 	for {
@@ -52,7 +56,7 @@ func (b *batchBuffer[T]) run(ctx context.Context) error {
 	}
 }
 
-func (b *batchBuffer[T]) push(ctx context.Context, item T) error {
+func (b *BatchBuffer[T]) Push(ctx context.Context, item T) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -65,7 +69,7 @@ func (b *batchBuffer[T]) push(ctx context.Context, item T) error {
 	}
 }
 
-func (b *batchBuffer[T]) flush(ctx context.Context) {
+func (b *BatchBuffer[T]) flush(ctx context.Context) {
 	_, _, _ = b.flushSf.Do("flush", func() (any, error) {
 		flushContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), b.config.Timeout)
 		defer cancel()
@@ -77,7 +81,7 @@ func (b *batchBuffer[T]) flush(ctx context.Context) {
 	})
 }
 
-func (b *batchBuffer[T]) finalFlush(ctx context.Context) error {
+func (b *BatchBuffer[T]) FinalFlush(ctx context.Context) error {
 	_, err, _ := b.flushSf.Do("flush", func() (any, error) {
 		err := b.doFlush(ctx)
 		b.ticker.Stop()
@@ -86,7 +90,7 @@ func (b *batchBuffer[T]) finalFlush(ctx context.Context) error {
 	return err
 }
 
-func (b *batchBuffer[T]) doFlush(ctx context.Context) error {
+func (b *BatchBuffer[T]) doFlush(ctx context.Context) error {
 	b.ticker.Stop()
 	defer b.ticker.Reset(b.config.Interval)
 
