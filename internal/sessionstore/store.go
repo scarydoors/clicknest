@@ -35,7 +35,7 @@ type Entry struct {
 	End time.Time
 }
 
-func NewSessionStore(config batchbuffer.FlushConfig, sessionStorage batchbuffer.Storage[analytics.Session], logger *slog.Logger) *Store {
+func NewStore(config batchbuffer.FlushConfig, sessionStorage batchbuffer.Storage[analytics.Session], logger *slog.Logger) *Store {
 	return &Store{
 		config: config,
 		cache: cache.NewCache[analytics.UserID, Entry](DefaultSessionTTL, DefaultSessionCheckInterval),
