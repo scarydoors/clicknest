@@ -44,7 +44,7 @@ func (s *Service) Start() error {
 	return nil
 }
 
-func (s *Service) ShutdownWorkers(ctx context.Context) error {
+func (s *Service) Shutdown(ctx context.Context) error {
 	s.workerCancel()
 
 	worker := workerutil.Worker{

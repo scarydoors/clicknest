@@ -37,8 +37,8 @@ func marshalEvent(event analytics.Event) EventModel {
 		Timestamp: event.Timestamp,
 		Domain:    event.Domain,
 		Kind:      event.Kind,
-		SessionID: event.SessionID,
-		UserID:    event.UserID,
+		SessionID: uint64(event.SessionID),
+		UserID:    uint64(event.UserID),
 		Pathname:  event.Pathname,
 	}
 }

@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 )
@@ -13,8 +12,6 @@ type Cache[K comparable, V any] struct {
 	checkInterval time.Duration
 
 	mu sync.Mutex
-	cancel context.CancelFunc
-	done chan struct{}
 }
 
 type Item[V any] struct {
@@ -34,31 +31,13 @@ func NewCache[K comparable, V any](ttl time.Duration, checkInterval time.Duratio
 	}
 }
 
-func (c *Cache[K, V]) Start() error {
-	c.mu.Unlock()
-	defer c.mu.Lock()
-	if c.cancel != nil {
-		return errors.New("ttl worker already running")
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	c.cancel = cancel
-	c.done = make(chan struct{})
-
-	go c.ttlWorker(ctx, c.done)
-
-	return nil
-}
-
-func (c *Cache[K, V]) ttlWorker(ctx context.Context, done chan<- struct{}) {
+func (c *Cache[K, V]) Run(ctx context.Context) error {
 	timeCh := time.Tick(c.checkInterval)
-	defer close(done)
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case <-timeCh:
 			c.removeExpiredItems()
 		}
@@ -74,11 +53,6 @@ func (c *Cache[K, V]) removeExpiredItems() {
 			delete(c.data, key)
 		}
 	}
-}
-
-func (c *Cache[K, V]) Stop() {
-	c.cancel()
-	<-c.done
 }
 
 func (c *Cache[K, V]) Set(key K, value V) {

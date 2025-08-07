@@ -41,7 +41,7 @@ func TestBatchBuffer_FinalFlushClearsOutAllItems(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		_ = writer.run(ctx)
+		_ = writer.Run(ctx)
 	}()
 
 	const pushCount = (limit * 3) + limit - 1
@@ -54,7 +54,7 @@ func TestBatchBuffer_FinalFlushClearsOutAllItems(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				_ = writer.push(context.Background(), pushNo)
+				_ = writer.Push(context.Background(), pushNo)
 			}()
 		}
 	}()
@@ -62,6 +62,6 @@ func TestBatchBuffer_FinalFlushClearsOutAllItems(t *testing.T) {
 
 	cancel()
 	<-done
-	_ = writer.finalFlush(context.Background())
+	_ = writer.FinalFlush(context.Background())
 	assert.Equal(t, pushCount, flushedItemCount)
 }

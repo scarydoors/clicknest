@@ -10,10 +10,13 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/scarydoors/clicknest/internal/batchbuffer"
 	"github.com/scarydoors/clicknest/internal/clickhouse"
 	"github.com/scarydoors/clicknest/internal/errorutil"
 	"github.com/scarydoors/clicknest/internal/ingest"
 	"github.com/scarydoors/clicknest/internal/server"
+	"github.com/scarydoors/clicknest/internal/sessionstore"
+	"github.com/scarydoors/clicknest/internal/workerutil"
 )
 
 func main() {
@@ -39,14 +42,21 @@ func main() {
 	eventRepo := clickhouse.NewEventRepository(clickhouseDB, logger)
 	sessionRepo := clickhouse.NewSessionRepository(clickhouseDB, logger)
 
-	ingestService := ingest.NewService(eventRepo, logger)
-	if err := ingestService.StartWorkers(ingest.FlushConfig{
+	flushConfig := batchbuffer.FlushConfig{
 		Interval: 4 * time.Second,
 		Limit:    100000,
 		Timeout:  10 * time.Second,
-	}); err != nil {
-		log.Fatalf("unable to start ingest workers: %s", err)
 	}
+	sessionStore := sessionstore.NewStore(flushConfig, sessionRepo, logger)
+	ingestService := ingest.NewService(flushConfig, eventRepo, sessionStore, logger)
+
+	if err := ingestService.Start(); err != nil {
+		log.Fatalf("unable to start ingest service workers: %s", err)
+	}
+	if err := sessionStore.Start(); err != nil {
+		log.Fatalf("unable to start session store workers: %s", err)
+	}
+
 	srv := server.NewServer(logger, ingestService)
 
 	httpServer := http.Server{
@@ -76,10 +86,8 @@ func main() {
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			logger.Error("error while shutting down server", slog.Any("error", err))
 		}
-
-		if err := ingestService.ShutdownWorkers(shutdownCtx); err != nil {
-			logger.Error("error while shutting down server", slog.Any("error", err))
-		}
+		
+		err := workerutil.ShutdownServices(shutdownCtx, ingestService, sessionStore)
 	}()
 	<-done
 }

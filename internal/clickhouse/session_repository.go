@@ -41,8 +41,8 @@ func marshalSession(session analytics.Session) SessionModel {
 		Domain:     session.Domain,
 		Duration:   session.Duration,
 		EventCount: session.EventCount,
-		SessionID:  session.SessionID,
-		UserID:     session.UserID,
+		SessionID:  uint64(session.SessionID),
+		UserID:     uint64(session.UserID),
 		Sign:       session.Sign,
 	}
 }
