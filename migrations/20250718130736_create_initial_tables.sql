@@ -19,6 +19,7 @@ CREATE TABLE sessions
     end DateTime CODEC(Delta(4), ZSTD),
     domain LowCardinality(String),
     duration UInt32,
+    event_count UInt32,
     session_id UInt64,
     user_id UInt64,
     sign Int8,
