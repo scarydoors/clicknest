@@ -4,7 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/scarydoors/clicknest/internal/workerutil"
 	"golang.org/x/sync/singleflight"
+)
+
+var (
+	_ workerutil.Runner  = (*BatchBuffer[any])(nil)
+	_ workerutil.Cleaner = (*BatchBuffer[any])(nil)
 )
 
 type FlushConfig struct {
@@ -88,6 +94,10 @@ func (b *BatchBuffer[T]) FinalFlush(ctx context.Context) error {
 		return nil, err
 	})
 	return err
+}
+
+func (b *BatchBuffer[T]) Cleanup(ctx context.Context) error {
+	return b.FinalFlush(ctx)
 }
 
 func (b *BatchBuffer[T]) doFlush(ctx context.Context) error {
