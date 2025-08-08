@@ -19,13 +19,12 @@ CREATE TABLE sessions
     end DateTime CODEC(Delta(4), ZSTD),
     domain LowCardinality(String),
     duration UInt32,
-    event_count UInt32,
     session_id UInt64,
     user_id UInt64,
     sign Int8,
     INDEX minmax_end end TYPE minmax GRANULARITY 1,
 )
-ENGINE = VersionedCollapsingMergeTree(sign, event_count)
+ENGINE = VersionedCollapsingMergeTree(sign, end)
 PARTITION BY toYYYYMM(start)
 PRIMARY KEY (domain, toDate(start), user_id, session_id)
 ORDER BY (domain, toDate(start), user_id, session_id, start);
