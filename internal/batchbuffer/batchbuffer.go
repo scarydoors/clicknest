@@ -108,7 +108,7 @@ func (b *BatchBuffer[T]) doFlush(ctx context.Context) error {
 		return nil
 	}
 
-	count := min(len(b.itemCh), b.config.Limit)
+	count := len(b.itemCh)
 	buf := make([]T, 0, count)
 	for range count {
 		buf = append(buf, <-b.itemCh)
