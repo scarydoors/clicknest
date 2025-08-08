@@ -23,6 +23,7 @@ type Worker struct {
 func StartWorkers(wg *sync.WaitGroup, logger *slog.Logger, workers ...Worker) context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	for _, worker := range workers {
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			// only returns context error, error is ignored

@@ -13,7 +13,7 @@ type Event struct {
 	Timestamp time.Time
 	Domain    string
 	Kind      string
-	SessionID uint64
+	SessionID SessionID
 	UserID    UserID
 	Pathname  string
 }
@@ -37,7 +37,7 @@ func (e Event) LogValue() slog.Value {
 		slog.Time("timestamp", e.Timestamp),
 		slog.String("domain", e.Domain),
 		slog.String("kind", e.Kind),
-		slog.Uint64("session_id", e.SessionID),
+		slog.Any("session_id", e.SessionID),
 		slog.Any("user_id", e.UserID),
 		slog.String("pathname", e.Pathname),
 	)

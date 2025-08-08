@@ -8,7 +8,13 @@ import (
 type SessionID uint64
 
 func NewSessionID() SessionID {
-	return SessionID(rand.Uint64())
+	var id uint64
+	// 0 is an invalid id here
+	for id == 0 {
+		id = rand.Uint64()
+	}
+
+	return SessionID(id)
 }
 
 type Session struct {
