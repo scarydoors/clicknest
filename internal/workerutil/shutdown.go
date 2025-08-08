@@ -3,6 +3,7 @@ package workerutil
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -10,15 +11,39 @@ type Shutdowner interface {
 	Shutdown(context.Context) error
 }
 
-func ShutdownServices(ctx context.Context, shutdowners... Shutdowner) error {
-	errChan := make(chan error, len(shutdowners))
+type Service struct {
+	Name string
+	Shutdowner Shutdowner
+}
+
+type ShutdownError struct {
+	Name string
+	err error
+}
+
+func (e *ShutdownError) Error() string {
+	return fmt.Sprintf("unable to shutdown gracefully: %s", e.err)
+}
+
+func (e *ShutdownError) Unwrap() error {
+	return e.err
+}
+
+func ShutdownServices(ctx context.Context, services... Service) error {
+	errChan := make(chan *ShutdownError, len(services))
 	var wg sync.WaitGroup
 
-	for _, shutdowner := range shutdowners {
+	for _, service := range services {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			errChan <- shutdowner.Shutdown(ctx)
+			if err := service.Shutdowner.Shutdown(ctx); err != nil {
+				err := &ShutdownError{
+					Name: service.Name,
+					err: err,
+				}
+				errChan <- err
+			}
 		}()
 	}
 

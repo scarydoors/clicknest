@@ -87,7 +87,24 @@ func main() {
 			logger.Error("error while shutting down server", slog.Any("error", err))
 		}
 		
-		err := workerutil.ShutdownServices(shutdownCtx, ingestService, sessionStore)
+		services := []workerutil.Service{
+			{
+				Name: "ingest",
+				Shutdowner: ingestService,
+			},
+			{
+				Name: "sessionstore",
+				Shutdowner: sessionStore,
+			},
+		}
+		if err := workerutil.ShutdownServices(shutdownCtx, services...); err != nil {
+			for _, err := range errorutil.IntoSlice(err) {
+				var serr *workerutil.ShutdownError
+				if errors.As(err, &serr) {
+					logger.Error("error while shutting down service", slog.String("service", serr.Name), slog.Any("error", serr.Error()))
+				}
+			}
+		}
 	}()
 	<-done
 }
