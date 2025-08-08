@@ -45,8 +45,8 @@ func (c *Cache[K, V]) Run(ctx context.Context) error {
 }
 
 func (c *Cache[K, V]) removeExpiredItems() {
-	c.mu.Unlock()
-	defer c.mu.Lock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	for key, item := range c.data {
 		if !item.isExpired() {
@@ -56,8 +56,8 @@ func (c *Cache[K, V]) removeExpiredItems() {
 }
 
 func (c *Cache[K, V]) Set(key K, value V) {
-	c.mu.Unlock()
-	defer c.mu.Lock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	expiry := time.Now().Add(c.ttl)
 	item := Item[V]{
@@ -69,8 +69,8 @@ func (c *Cache[K, V]) Set(key K, value V) {
 }
 
 func (c *Cache[K, V]) Get(key K) (Item[V], bool) {
-	c.mu.Unlock()
-	defer c.mu.Lock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	item, ok := c.data[key]
 	if !ok {
