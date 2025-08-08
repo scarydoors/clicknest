@@ -60,7 +60,7 @@ func CleanupWorkers(ctx context.Context, wg *sync.WaitGroup, logger *slog.Logger
 
 		cleanupWg.Add(1)
 		go func() {
-			defer wg.Done()
+			defer cleanupWg.Done()
 			if err := c.Cleanup(ctx); err != nil {
 				logger.Error("worker cleanup encountered an error", slog.String("name", worker.Name), slog.Any("error", err))
 			} else {
