@@ -13,19 +13,18 @@ import (
 )
 
 type Service struct {
-	logger         *slog.Logger
+	logger       *slog.Logger
 	sessionStore *sessionstore.Store
 
-	eventWriter   *batchbuffer.BatchBuffer[analytics.Event]
-	workerCancel  context.CancelFunc
-	workerWg      sync.WaitGroup
+	eventWriter  *batchbuffer.BatchBuffer[analytics.Event]
+	workerCancel context.CancelFunc
+	workerWg     sync.WaitGroup
 }
-
 
 func NewService(config batchbuffer.FlushConfig, eventStorage batchbuffer.Storage[analytics.Event], sessionStore *sessionstore.Store, logger *slog.Logger) *Service {
 	s := &Service{
-		logger:         logger,
-		sessionStore:   sessionStore,
+		logger:       logger,
+		sessionStore: sessionStore,
 	}
 
 	s.eventWriter = batchbuffer.NewBatchBuffer(eventStorage, s.handleEventWriterError, config)
@@ -35,7 +34,7 @@ func NewService(config batchbuffer.FlushConfig, eventStorage batchbuffer.Storage
 
 func (s *Service) Start() error {
 	worker := workerutil.Worker{
-		Name: "eventWriter",
+		Name:   "eventWriter",
 		Runner: s.eventWriter,
 	}
 
@@ -48,7 +47,7 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	s.workerCancel()
 
 	worker := workerutil.Worker{
-		Name: "eventWriter",
+		Name:   "eventWriter",
 		Runner: s.eventWriter,
 	}
 
@@ -74,4 +73,3 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 func (s *Service) handleEventWriterError(ctx context.Context, err error) {
 	s.logger.ErrorContext(ctx, "failed to flush writer", slog.String("name", "event"), slog.Any("error", err))
 }
-

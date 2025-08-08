@@ -12,13 +12,13 @@ type Shutdowner interface {
 }
 
 type Service struct {
-	Name string
+	Name       string
 	Shutdowner Shutdowner
 }
 
 type ShutdownError struct {
 	Name string
-	err error
+	err  error
 }
 
 func (e *ShutdownError) Error() string {
@@ -29,7 +29,7 @@ func (e *ShutdownError) Unwrap() error {
 	return e.err
 }
 
-func ShutdownServices(ctx context.Context, services... Service) error {
+func ShutdownServices(ctx context.Context, services ...Service) error {
 	errChan := make(chan *ShutdownError, len(services))
 	var wg sync.WaitGroup
 
@@ -40,7 +40,7 @@ func ShutdownServices(ctx context.Context, services... Service) error {
 			if err := service.Shutdowner.Shutdown(ctx); err != nil {
 				err := &ShutdownError{
 					Name: service.Name,
-					err: err,
+					err:  err,
 				}
 				errChan <- err
 			}

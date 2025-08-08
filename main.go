@@ -86,14 +86,14 @@ func main() {
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			logger.Error("error while shutting down server", slog.Any("error", err))
 		}
-		
+
 		services := []workerutil.Service{
 			{
-				Name: "ingest",
+				Name:       "ingest",
 				Shutdowner: ingestService,
 			},
 			{
-				Name: "sessionstore",
+				Name:       "sessionstore",
 				Shutdowner: sessionStore,
 			},
 		}

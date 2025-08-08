@@ -17,25 +17,25 @@ const DefaultSessionTTL = 30 * time.Minute
 const DefaultSessionCheckInterval = 1 * time.Minute
 
 type Store struct {
-	cache *cache.Cache[analytics.UserID, Entry]
+	cache         *cache.Cache[analytics.UserID, Entry]
 	sessionWriter *batchbuffer.BatchBuffer[analytics.Session]
 
 	workerCancel context.CancelFunc
-	workerWg sync.WaitGroup
+	workerWg     sync.WaitGroup
 
 	logger *slog.Logger
 }
 
 type Entry struct {
 	SessionID analytics.SessionID
-	Domain string
-	Start time.Time
-	End time.Time
+	Domain    string
+	Start     time.Time
+	End       time.Time
 }
 
 func NewStore(config batchbuffer.FlushConfig, storage batchbuffer.Storage[analytics.Session], logger *slog.Logger) *Store {
 	s := &Store{
-		cache: cache.NewCache[analytics.UserID, Entry](DefaultSessionTTL, DefaultSessionCheckInterval),
+		cache:  cache.NewCache[analytics.UserID, Entry](DefaultSessionTTL, DefaultSessionCheckInterval),
 		logger: logger,
 	}
 
@@ -48,18 +48,18 @@ func (s *Store) Start() error {
 	workers := s.workers()
 
 	s.workerCancel = workerutil.StartWorkers(&s.workerWg, s.logger, workers...)
-	
+
 	return nil
 }
 
 func (s *Store) workers() []workerutil.Worker {
 	return []workerutil.Worker{
 		{
-			Name: "sessionWriter",
+			Name:   "sessionWriter",
 			Runner: s.sessionWriter,
 		},
 		{
-			Name: "cache",
+			Name:   "cache",
 			Runner: s.cache,
 		},
 	}

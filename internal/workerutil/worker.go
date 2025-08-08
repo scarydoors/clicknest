@@ -16,11 +16,11 @@ type Cleaner interface {
 }
 
 type Worker struct {
-	Name string
+	Name   string
 	Runner Runner
 }
 
-func StartWorkers(wg *sync.WaitGroup, logger *slog.Logger, workers... Worker) context.CancelFunc {
+func StartWorkers(wg *sync.WaitGroup, logger *slog.Logger, workers ...Worker) context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 	for _, worker := range workers {
 		go func() {
@@ -38,9 +38,9 @@ func StartWorkers(wg *sync.WaitGroup, logger *slog.Logger, workers... Worker) co
 	return cancel
 }
 
-func CleanupWorkers(ctx context.Context, wg *sync.WaitGroup, logger *slog.Logger, workers... Worker) error {
+func CleanupWorkers(ctx context.Context, wg *sync.WaitGroup, logger *slog.Logger, workers ...Worker) error {
 	done := make(chan struct{})
-	go func(){
+	go func() {
 		defer close(done)
 		wg.Wait()
 	}()

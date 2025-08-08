@@ -7,15 +7,15 @@ import (
 )
 
 type Cache[K comparable, V any] struct {
-	data map[K]Item[V]
-	ttl time.Duration
+	data          map[K]Item[V]
+	ttl           time.Duration
 	checkInterval time.Duration
 
 	mu sync.Mutex
 }
 
 type Item[V any] struct {
-	Value V
+	Value  V
 	Expiry time.Time
 }
 
@@ -25,8 +25,8 @@ func (i Item[V]) isExpired() bool {
 
 func NewCache[K comparable, V any](ttl time.Duration, checkInterval time.Duration) *Cache[K, V] {
 	return &Cache[K, V]{
-		data: make(map[K]Item[V]),
-		ttl: ttl,
+		data:          make(map[K]Item[V]),
+		ttl:           ttl,
 		checkInterval: checkInterval,
 	}
 }
@@ -56,16 +56,16 @@ func (c *Cache[K, V]) removeExpiredItems() {
 }
 
 func (c *Cache[K, V]) Set(key K, value V) {
-	c.mu.Unlock()	
+	c.mu.Unlock()
 	defer c.mu.Lock()
 
 	expiry := time.Now().Add(c.ttl)
 	item := Item[V]{
-		Value: value,
+		Value:  value,
 		Expiry: expiry,
 	}
 
-	c.data[key] = item	
+	c.data[key] = item
 }
 
 func (c *Cache[K, V]) Get(key K) (Item[V], bool) {
@@ -74,7 +74,7 @@ func (c *Cache[K, V]) Get(key K) (Item[V], bool) {
 
 	item, ok := c.data[key]
 	if !ok {
-		return item, false		
+		return item, false
 	}
 
 	if item.isExpired() {
@@ -91,4 +91,3 @@ func (c *Cache[K, V]) Remove(key K) {
 
 	delete(c.data, key)
 }
-
