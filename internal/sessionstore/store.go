@@ -12,7 +12,7 @@ import (
 	"github.com/scarydoors/clicknest/internal/cache"
 )
 
-const DefaultSessionTTL = 30 * time.Minute
+const DefaultSessionTTL = 30 * time.Second
 const DefaultSessionCheckInterval = 1 * time.Minute
 
 type Store struct {
@@ -84,7 +84,7 @@ func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error
 	}
 
 	newState := sessionToState(newSession)
-	s.logger.Debug("state set", slog.Any("state", newState))
+	s.logger.Info("state set", slog.Any("state", newState))
 	s.cache.Set(event.UserID, newState)
 
 	event.SessionID = newSession.SessionID
