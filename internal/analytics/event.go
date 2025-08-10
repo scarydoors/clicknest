@@ -32,17 +32,6 @@ func NewEvent(timestamp time.Time, domain, kind, rawUrl string) (Event, error) {
 	}, nil
 }
 
-func (e Event) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.Time("timestamp", e.Timestamp),
-		slog.String("domain", e.Domain),
-		slog.String("kind", e.Kind),
-		slog.Any("session_id", e.SessionID),
-		slog.Any("user_id", e.UserID),
-		slog.String("pathname", e.Pathname),
-	)
-}
-
 type parsedURL struct {
 	pathname string
 }
@@ -63,3 +52,15 @@ func parseURL(rawUrl string) (parsedURL, error) {
 		pathname: pathname,
 	}, nil
 }
+
+func (e Event) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Time("timestamp", e.Timestamp),
+		slog.String("domain", e.Domain),
+		slog.String("kind", e.Kind),
+		slog.Any("session_id", e.SessionID),
+		slog.Any("user_id", e.UserID),
+		slog.String("pathname", e.Pathname),
+	)
+}
+

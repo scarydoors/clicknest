@@ -73,7 +73,7 @@ func (s Session) EventAdded(event Event) (Session, error) {
 	if event.Timestamp.After(s.End) {
 		duration, err := NewSessionDuration(s.Start, event.Timestamp)
 		if err != nil {
-			return Session{}, fmt.Errorf("update session: %w", err)
+			return Session{}, fmt.Errorf("calculate session duration: %w", err)
 		}
 
 		s.End = event.Timestamp

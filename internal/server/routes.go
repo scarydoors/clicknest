@@ -41,6 +41,10 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 				eventRequest.Kind,
 				eventRequest.Url,
 			)
+
+			var salt uint64 = 0 // TODO
+			event.UserID = analytics.NewUserID(salt, event.Domain, r.RemoteAddr, r.UserAgent())
+
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return

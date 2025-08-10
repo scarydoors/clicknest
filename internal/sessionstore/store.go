@@ -2,6 +2,7 @@ package sessionstore
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -32,6 +33,15 @@ type State struct {
 	EventCount uint32
 }
 
+func (s State) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("session_id", s.SessionID),
+		slog.Time("start", s.Start),
+		slog.Time("end", s.End),
+		slog.Any("event_count", s.EventCount),
+	)
+}
+
 func NewStore(config batchbuffer.FlushConfig, storage batchbuffer.Storage[analytics.Session], logger *slog.Logger) *Store {
 	s := &Store{
 		logger: logger,
@@ -43,7 +53,7 @@ func NewStore(config batchbuffer.FlushConfig, storage batchbuffer.Storage[analyt
 	return s
 }
 
-func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
+func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error {
 	mu := s.getSessionMutex(event.UserID)
 	mu.Lock()
 	defer mu.Unlock()
@@ -53,7 +63,11 @@ func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
 	if !found {
 		oldSession = analytics.NewSession(*event)
 	} else {
-		oldSession = composeSession(*event, entry.Value)
+		var err error
+		oldSession, err = composeSession(*event, entry.Value)
+		if err != nil {
+			return err
+		}
 	}
 
 	newSession, err := oldSession.EventAdded(*event);
@@ -70,6 +84,7 @@ func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
 	}
 
 	newState := sessionToState(newSession)
+	s.logger.Debug("state set", slog.Any("state", newState))
 	s.cache.Set(event.UserID, newState)
 
 	event.SessionID = newSession.SessionID
@@ -78,7 +93,19 @@ func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
 }
 
 func (s *Store) onSessionExpire(userID analytics.UserID, _ State) {
-	s.mutexMap.Delete(userID)
+	// ensure that there is no active update to a session happening.
+	mu := s.getSessionMutex(userID)
+	mu.Lock()
+	defer mu.Unlock()
+
+	// while an update was happening, we could have created a new session for
+	// the given userID, we mustn't delete the mutex because it could cause 2
+	// parallel updates to session if there is an s.RecordEvent still waiting
+	// for the old mutex to be unlocked and an s.RecordEvent creating a new one
+	// since it has been deleted from the map
+	if _, found := s.cache.Get(userID); !found {
+		s.mutexMap.Delete(userID)
+	}
 }
 
 func (s *Store) getSessionMutex(userID analytics.UserID) *sync.Mutex {
@@ -96,10 +123,10 @@ func (s *Store) getSessionMutex(userID analytics.UserID) *sync.Mutex {
 	return newMu
 }
 
-func composeSession(event analytics.Event, state State) analytics.Session {
+func composeSession(event analytics.Event, state State) (analytics.Session, error) {
 	duration, err := analytics.NewSessionDuration(state.Start, state.End)
 	if err != nil {
-		// TODO	
+		return analytics.Session{}, fmt.Errorf("calculate session duration: %w", err)
 	}
 
 	return analytics.Session{
@@ -111,7 +138,7 @@ func composeSession(event analytics.Event, state State) analytics.Session {
 		SessionID: state.SessionID,
 		UserID: event.UserID,
 		Sign: 1,	
-	}
+	}, nil
 }
 
 func sessionToState(session analytics.Session) State {
