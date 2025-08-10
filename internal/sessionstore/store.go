@@ -57,8 +57,12 @@ func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
 	}
 
 	oldSession.MarkCollapse()
-	s.sessionWriter.Push(ctx, oldSession)
-	s.sessionWriter.Push(ctx, newSession)
+	if err := s.sessionWriter.Push(ctx, oldSession); err != nil {
+		return err
+	}
+	if err := s.sessionWriter.Push(ctx, newSession); err != nil {
+		return err
+	}
 
 	newState := sessionToState(newSession)
 	s.cache.Set(event.UserID, newState)
@@ -71,6 +75,7 @@ func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
 func composeSession(event analytics.Event, state State) analytics.Session {
 	duration, err := analytics.NewSessionDuration(state.Start, state.End)
 	if err != nil {
+		// TODO
 	}
 
 	return analytics.Session{
