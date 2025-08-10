@@ -35,7 +35,8 @@ var ErrNegativeDuration = errors.New("session duration cannot be negative")
 var ErrDurationOverflowed = errors.New("session duration has overflowed")
 
 type SessionDuration uint32
-func NewSessionDuration(duration time.Duration) (SessionDuration, error) {
+func NewSessionDuration(start, end time.Time) (SessionDuration, error) {
+	duration := end.Sub(start)
 	if duration < 0 {
 		return 0, ErrNegativeDuration
 	}
@@ -52,11 +53,10 @@ func (s SessionDuration) Uint32() uint32 {
 }
 
 func (s SessionDuration) Duration() time.Duration {
-	return time.Duration(time.Duration(s.Uint32()) * time.Second)
+	return time.Duration(s.Uint32()) * time.Second
 }
 	
-
-func NewSessionFromEvent(event Event) Session {
+func NewSession(event Event) Session {
 	return Session{
 		Start:      event.Timestamp,
 		End:        event.Timestamp,
@@ -69,15 +69,23 @@ func NewSessionFromEvent(event Event) Session {
 	}
 }
 
-func (s *Session) Update(event Event) error {
-	duration, err := NewSessionDuration(event.Timestamp.Sub(s.Start))
+func (s Session) EventAdded(event Event) (Session, error) {
+	duration, err := NewSessionDuration(s.Start, event.Timestamp)
 	if err != nil {
-		return fmt.Errorf("update session: %w", err)
+		return Session{}, fmt.Errorf("update session: %w", err)
 	}
 
 	s.End = event.Timestamp
 	s.Duration = duration
 	s.EventCount++
 	
-	return nil
+	return s, nil
+}
+
+func (s *Session) MarkPersist() {
+	s.Sign = 1
+}
+
+func (s *Session) MarkCollapse() {
+	s.Sign = -1
 }
