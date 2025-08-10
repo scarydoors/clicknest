@@ -8,6 +8,7 @@ import (
 
 type Cache[K comparable, V any] struct {
 	data          map[K]Item[V]
+	onExpire      func(key K, value V)
 	ttl           time.Duration
 	checkInterval time.Duration
 
@@ -23,9 +24,10 @@ func (i Item[V]) isExpired() bool {
 	return time.Now().After(i.Expiry)
 }
 
-func NewCache[K comparable, V any](ttl time.Duration, checkInterval time.Duration) *Cache[K, V] {
+func NewCache[K comparable, V any](ttl time.Duration, checkInterval time.Duration, onExpire func(key K, value V)) *Cache[K, V] {
 	return &Cache[K, V]{
 		data:          make(map[K]Item[V]),
+		onExpire: onExpire,
 		ttl:           ttl,
 		checkInterval: checkInterval,
 	}
@@ -49,8 +51,9 @@ func (c *Cache[K, V]) removeExpiredItems() {
 	defer c.mu.Unlock()
 
 	for key, item := range c.data {
-		if !item.isExpired() {
+		if item.isExpired() {
 			delete(c.data, key)
+			c.onExpire(key, item.Value)
 		}
 	}
 }

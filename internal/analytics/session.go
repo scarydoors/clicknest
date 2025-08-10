@@ -70,13 +70,15 @@ func NewSession(event Event) Session {
 }
 
 func (s Session) EventAdded(event Event) (Session, error) {
-	duration, err := NewSessionDuration(s.Start, event.Timestamp)
-	if err != nil {
-		return Session{}, fmt.Errorf("update session: %w", err)
-	}
+	if event.Timestamp.After(s.End) {
+		duration, err := NewSessionDuration(s.Start, event.Timestamp)
+		if err != nil {
+			return Session{}, fmt.Errorf("update session: %w", err)
+		}
 
-	s.End = event.Timestamp
-	s.Duration = duration
+		s.End = event.Timestamp
+		s.Duration = duration
+	}
 	s.EventCount++
 	
 	return s, nil

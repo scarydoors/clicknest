@@ -15,6 +15,7 @@ const DefaultSessionTTL = 30 * time.Minute
 const DefaultSessionCheckInterval = 1 * time.Minute
 
 type Store struct {
+	mutexMap 	  sync.Map
 	cache         *cache.Cache[analytics.UserID, State]
 	sessionWriter *batchbuffer.BatchBuffer[analytics.Session]
 
@@ -33,16 +34,20 @@ type State struct {
 
 func NewStore(config batchbuffer.FlushConfig, storage batchbuffer.Storage[analytics.Session], logger *slog.Logger) *Store {
 	s := &Store{
-		cache:  cache.NewCache[analytics.UserID, State](DefaultSessionTTL, DefaultSessionCheckInterval),
 		logger: logger,
 	}
 
 	s.sessionWriter = batchbuffer.NewBatchBuffer(storage, s.handleSessionWriterError, config)
+	s.cache = cache.NewCache(DefaultSessionTTL, DefaultSessionCheckInterval, s.onSessionExpire)
 
 	return s
 }
 
 func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
+	mu := s.getSessionMutex(event.UserID)
+	mu.Lock()
+	defer mu.Unlock()
+
 	var oldSession analytics.Session
 	entry, found := s.cache.Get(event.UserID)
 	if !found {
@@ -72,10 +77,29 @@ func (s *Store) RecordEvent(ctx context.Context, event *analytics.Event) error {
 	return nil
 }
 
+func (s *Store) onSessionExpire(userID analytics.UserID, _ State) {
+	s.mutexMap.Delete(userID)
+}
+
+func (s *Store) getSessionMutex(userID analytics.UserID) *sync.Mutex {
+	mu, ok := s.mutexMap.Load(userID)
+	if ok {
+		return mu.(*sync.Mutex)
+	}
+
+	newMu := &sync.Mutex{}
+	actual, loaded := s.mutexMap.LoadOrStore(userID, newMu)
+	if loaded {
+		return actual.(*sync.Mutex)
+	}
+
+	return newMu
+}
+
 func composeSession(event analytics.Event, state State) analytics.Session {
 	duration, err := analytics.NewSessionDuration(state.Start, state.End)
 	if err != nil {
-		// TODO
+		// TODO	
 	}
 
 	return analytics.Session{
