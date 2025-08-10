@@ -53,7 +53,7 @@ func (c *Cache[K, V]) removeExpiredItems() {
 	for key, item := range c.data {
 		if item.isExpired() {
 			delete(c.data, key)
-			c.onExpire(key, item.Value)
+			go c.onExpire(key, item.Value)
 		}
 	}
 }

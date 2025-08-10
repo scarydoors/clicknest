@@ -54,30 +54,34 @@ func NewStore(config batchbuffer.FlushConfig, storage batchbuffer.Storage[analyt
 }
 
 func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error {
+	s.logger.Info("getSessionMutex extend session")
 	mu := s.getSessionMutex(event.UserID)
+	s.logger.Info("lock session mutex extend session")
 	mu.Lock()
 	defer mu.Unlock()
 
-	var oldSession analytics.Session
+	var oldSession, newSession analytics.Session
 	entry, found := s.cache.Get(event.UserID)
 	if !found {
-		oldSession = analytics.NewSession(*event)
+		newSession = analytics.NewSession(*event)
 	} else {
 		var err error
 		oldSession, err = composeSession(*event, entry.Value)
 		if err != nil {
 			return err
 		}
+
+		newSession, err = oldSession.EventAdded(*event);
+		if err != nil {
+			return err
+		}
 	}
 
-	newSession, err := oldSession.EventAdded(*event);
-	if err != nil {
-		return err
-	}
-
-	oldSession.MarkCollapse()
-	if err := s.sessionWriter.Push(ctx, oldSession); err != nil {
-		return err
+	if oldSession != (analytics.Session{}) {
+		oldSession.MarkCollapse()
+		if err := s.sessionWriter.Push(ctx, oldSession); err != nil {
+			return err
+		}
 	}
 	if err := s.sessionWriter.Push(ctx, newSession); err != nil {
 		return err
@@ -94,7 +98,9 @@ func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error
 
 func (s *Store) onSessionExpire(userID analytics.UserID, _ State) {
 	// ensure that there is no active update to a session happening.
+	s.logger.Info("getSessionMutex onsessionexpire")
 	mu := s.getSessionMutex(userID)
+	s.logger.Info("lock session mutex on session expire")
 	mu.Lock()
 	defer mu.Unlock()
 
