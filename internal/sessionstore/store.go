@@ -54,9 +54,7 @@ func NewStore(config batchbuffer.FlushConfig, storage batchbuffer.Storage[analyt
 }
 
 func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error {
-	s.logger.Info("getSessionMutex extend session")
 	mu := s.getSessionMutex(event.UserID)
-	s.logger.Info("lock session mutex extend session")
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -88,7 +86,6 @@ func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error
 	}
 
 	newState := sessionToState(newSession)
-	s.logger.Info("state set", slog.Any("state", newState))
 	s.cache.Set(event.UserID, newState)
 
 	event.SessionID = newSession.SessionID
@@ -98,9 +95,7 @@ func (s *Store) ExtendSession(ctx context.Context, event *analytics.Event) error
 
 func (s *Store) onSessionExpire(userID analytics.UserID, _ State) {
 	// ensure that there is no active update to a session happening.
-	s.logger.Info("getSessionMutex onsessionexpire")
 	mu := s.getSessionMutex(userID)
-	s.logger.Info("lock session mutex on session expire")
 	mu.Lock()
 	defer mu.Unlock()
 
