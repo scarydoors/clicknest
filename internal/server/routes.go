@@ -20,6 +20,7 @@ type EventRequest struct {
 	Domain string `json:"domain"`
 	Kind   string `json:"kind"`
 	Url    string `json:"url"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Handler {
@@ -36,17 +37,15 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 			}
 
 			event, err := analytics.NewEvent(
-				time.Now(),
+				eventRequest.Timestamp,
 				eventRequest.Domain,
 				eventRequest.Kind,
 				eventRequest.Url,
 			)
 
 			var salt uint64 = 0 // TODO
-			ip := r.Header.Get("X-Forwarded-For")
-			logger.Info("generating userid", "domain", event.Domain, "ip", ip, "ua", r.UserAgent())
+			ip := getClientIP(r)
 			event.UserID = analytics.NewUserID(salt, event.Domain, ip, r.UserAgent())
-			logger.Info("generated userid", "userid", event.UserID)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
