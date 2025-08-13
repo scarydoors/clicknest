@@ -19,6 +19,7 @@
                         goperf
                         git
                         golangci-lint
+                        bun
                     ];
                 };
             }
