@@ -13,7 +13,7 @@ function track() {
         kind: "pageview",
         timestamp: new Date(),
     };
-    fetch(`${baseUrl}/event`, {
+    fetch(`${baseUrl}/api/event`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

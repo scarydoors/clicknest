@@ -9,11 +9,18 @@ import (
 	"github.com/scarydoors/clicknest/internal/analytics"
 	"github.com/scarydoors/clicknest/internal/errorutil"
 	"github.com/scarydoors/clicknest/internal/ingest"
+	"github.com/rs/cors"
 )
 
 func setupRoutes(mux *http.ServeMux, logger *slog.Logger, ingestService *ingest.Service) {
-	mux.Handle("POST /event", handleEventPost(ingestService, logger))
 	mux.Handle("/", http.NotFoundHandler())
+
+	corsMiddleware := cors.AllowAll()
+
+	muxAPI := http.NewServeMux()
+	mux.Handle("/api/", http.StripPrefix("/api", corsMiddleware.Handler(muxAPI)))
+
+	muxAPI.Handle("/event", handleEventPost(ingestService, logger))
 }
 
 type EventRequest struct {
@@ -44,8 +51,13 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 			)
 
 			var salt uint64 = 0 // TODO
-			ip := getClientIP(r)
+			ip, err := getClientIP(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			event.UserID = analytics.NewUserID(salt, event.Domain, ip, r.UserAgent())
+			slog.Info("userid logged","salt", salt, "domain", event.Domain, "ip", ip, "ua", r.UserAgent())
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -56,6 +68,7 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			w.WriteHeader(http.StatusNoContent)
 		},
 	)
 }
