@@ -59,11 +59,6 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 			event.UserID = analytics.NewUserID(salt, event.Domain, ip, r.UserAgent())
 			slog.Info("userid logged","salt", salt, "domain", event.Domain, "ip", ip, "ua", r.UserAgent())
 
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
 			if err := ingestService.IngestEvent(ctx, event); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
