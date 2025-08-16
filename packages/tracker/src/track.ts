@@ -6,7 +6,7 @@ export interface EventRequest {
 };
 
 const baseUrl = 'http://localhost:6969';
-function track() {
+export function track() {
     const body: EventRequest = {
         url: window.location.href,
         domain: "localhost",
