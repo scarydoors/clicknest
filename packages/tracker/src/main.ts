@@ -1,4 +1,4 @@
-interface EventRequest {
+export interface EventRequest {
     domain: string;
     kind: string;
     url: string;
