@@ -1,3 +1,11 @@
-import { type EventRequest, track } from "./track";
+import { setupAutoTrack, track } from "./track";
+import { Config, setConfig } from "./config";
 
-export { EventRequest, track }
+function init(config: Config) {
+    setConfig(config)
+
+    setupAutoTrack()
+    track()
+}
+
+export { init, Config }
