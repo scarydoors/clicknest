@@ -5,7 +5,7 @@ function init(config: Config) {
     setConfig(config)
 
     setupAutoTrack()
-    track()
+    track("pageview")
 }
 
 export { init, Config }
