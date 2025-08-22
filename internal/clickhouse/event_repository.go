@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -23,6 +24,7 @@ type EventModel struct {
 	SessionID uint64    `ch:"session_id"`
 	UserID    uint64    `ch:"user_id"`
 	Pathname  string    `ch:"pathname"`
+	Data map[string]string `ch:"data"`
 }
 
 func NewEventRepository(conn driver.Conn, logger *slog.Logger) *EventRepository {
@@ -40,6 +42,7 @@ func marshalEvent(event analytics.Event) EventModel {
 		SessionID: uint64(event.SessionID),
 		UserID:    uint64(event.UserID),
 		Pathname:  event.Pathname,
+		Data: maps.Clone(event.Data),
 	}
 }
 
@@ -51,7 +54,8 @@ func (c *EventRepository) BatchInsert(ctx context.Context, events []analytics.Ev
 			kind,
 			session_id,
 		    user_id,
-			pathname
+			pathname,
+			data
 		)`,
 	)
 	if err != nil {
@@ -61,6 +65,7 @@ func (c *EventRepository) BatchInsert(ctx context.Context, events []analytics.Ev
 
 	for _, event := range events {
 		model := marshalEvent(event)
+		c.logger.Info("marshalled model", "model", model)
 		err := batch.AppendStruct(&model)
 		if err != nil {
 			return err

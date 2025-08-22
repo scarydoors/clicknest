@@ -7,7 +7,7 @@ CREATE TABLE events
     session_id UInt64,
     user_id UInt64,
     pathname String,
-    attributes Map(String, String)
+    data Map(String, String)
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(timestamp)

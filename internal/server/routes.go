@@ -28,6 +28,7 @@ type EventRequest struct {
 	Kind   string `json:"kind"`
 	Url    string `json:"url"`
 	Timestamp time.Time `json:"timestamp"`
+	Data map[string]string `json:"data,omitempty"`
 }
 
 func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Handler {
@@ -49,6 +50,7 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 				eventRequest.Kind,
 				eventRequest.Url,
 			)
+			event.Data = eventRequest.Data
 
 			var salt uint64 = 0 // TODO
 			ip, err := getClientIP(r)

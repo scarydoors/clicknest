@@ -6,18 +6,28 @@ interface EventRequest {
     kind: EventKind;
     url: string;
     timestamp: Date;
+    data?: EventData;
 };
 
 const baseUrl = 'http://localhost:6969';
 
+type Flat = string 
+| number 
+| boolean 
+| null 
+| undefined
+| Date;
+export type EventData = Record<string, Flat>
 export type EventKind = 'pageview' | (string & {})
-export function track(kind: EventKind) {
+
+export function track(kind: EventKind, data?: EventData) {
     const { domain } = getConfig()
     const body: EventRequest = {
         url: window.location.href,
         domain: domain,
         kind,
         timestamp: new Date(),
+        data
     };
     fetch(`${baseUrl}/api/event`, {
         method: 'POST',

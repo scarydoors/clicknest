@@ -16,6 +16,7 @@ type Event struct {
 	SessionID SessionID
 	UserID    UserID
 	Pathname  string
+	Data map[string]string
 }
 
 func NewEvent(timestamp time.Time, domain, kind, rawUrl string) (Event, error) {
@@ -61,6 +62,7 @@ func (e Event) LogValue() slog.Value {
 		slog.Any("session_id", e.SessionID),
 		slog.Any("user_id", e.UserID),
 		slog.String("pathname", e.Pathname),
+		slog.Any("data", e.Data),
 	)
 }
 

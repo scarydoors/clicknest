@@ -67,6 +67,7 @@ func (s *Service) IngestEvent(ctx context.Context, event analytics.Event) error 
 		return fmt.Errorf("extend session: %w", err)
 	}
 
+	s.logger.Info("ingesting event", "event", event)
 	if err := s.eventWriter.Push(ctx, event); err != nil {
 		return fmt.Errorf("push event: %w", err)
 	}

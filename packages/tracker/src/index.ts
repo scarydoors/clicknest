@@ -8,4 +8,5 @@ function init(config: Config) {
     track("pageview")
 }
 
-export { init, Config }
+export default { init, track }
+export { Config }
