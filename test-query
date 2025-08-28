@@ -1,0 +1,4 @@
+SELECT toStartOfInterval(timestamp, INTERVAL 15 MINUTE) as time, count(*) FROM default.events
+WHERE kind = 'pageview'
+GROUP BY time
+ORDER BY time WITH FILL STEP INTERVAL 15 MINUTE
