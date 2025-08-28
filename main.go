@@ -16,6 +16,7 @@ import (
 	"github.com/scarydoors/clicknest/internal/ingest"
 	"github.com/scarydoors/clicknest/internal/server"
 	"github.com/scarydoors/clicknest/internal/sessionstore"
+	"github.com/scarydoors/clicknest/internal/stats"
 	"github.com/scarydoors/clicknest/internal/workerutil"
 )
 
@@ -49,6 +50,7 @@ func main() {
 	}
 	sessionStore := sessionstore.NewStore(flushConfig, sessionRepo, logger)
 	ingestService := ingest.NewService(flushConfig, eventRepo, sessionStore, logger)
+	statsService := stats.NewService(logger)
 
 	if err := ingestService.Start(); err != nil {
 		log.Fatalf("unable to start ingest service workers: %s", err)
@@ -57,7 +59,7 @@ func main() {
 		log.Fatalf("unable to start session store workers: %s", err)
 	}
 
-	srv := server.NewServer(logger, ingestService)
+	srv := server.NewServer(logger, ingestService, statsService)
 
 	httpServer := http.Server{
 		Addr:    ":6969",

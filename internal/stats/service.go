@@ -9,8 +9,8 @@ type Service struct {
 	logger *slog.Logger
 }
 
-func NewService(logger *slog.Logger) Service {
-	return Service{
+func NewService(logger *slog.Logger) *Service {
+	return &Service{
 		logger: logger,
 	}
 }
@@ -21,4 +21,3 @@ type PageviewEntry struct {
 }
 
 type PageviewResult []PageviewEntry
-func (s *Service) GetPageviews() 
