@@ -8,14 +8,13 @@ import (
 )
 
 func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, statsService *stats.Service) {
-	apiMux.Handle("GET /graph", handleGraphGet(statsService, logger))
+	apiMux.Handle("GET /timeseries", handleTimeseriesGet(statsService, logger))
 }
 
-func handleGraphGet(statsService *stats.Service, logger *slog.Logger) http.Handler {
+func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Hello World"))
+				
 		},
 	)
 }
