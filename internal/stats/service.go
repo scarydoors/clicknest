@@ -21,3 +21,6 @@ type PageviewEntry struct {
 }
 
 type PageviewResult []PageviewEntry
+
+func (s *Service) GetPageviews() {
+}

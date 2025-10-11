@@ -21,4 +21,3 @@ func setupRoutes(mux *http.ServeMux, logger *slog.Logger, ingestService *ingest.
 	handlers.RegisterIngestRoutes(apiMux, logger, ingestService)
 	handlers.RegisterStatsRoutes(apiMux, logger, statsService)
 }
-
