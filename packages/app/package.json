@@ -41,5 +41,8 @@
 	},
 	"trustedDependencies": [
 		"@tailwindcss/oxide"
-	]
+	],
+	"dependencies": {
+		"layerchart": "2.0.0-next.27"
+	}
 }
