@@ -47,7 +47,8 @@ onMount(() => {
                 motion: "tween",
             },
             xAxis: {
-                format: (v: Date) => v.toLocaleDateString(undefined, { month: "short" })
+                format: (v: Date) => v.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+                ticks: data?.length ?? 0
             },
             yAxis: { format: () => "" },
         }}
