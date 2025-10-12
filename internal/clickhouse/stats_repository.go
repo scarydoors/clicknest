@@ -50,7 +50,7 @@ func (s *StatsRepository) GetPageviews(ctx context.Context) (stats.Timeseries, e
 		WHERE kind = 'pageview'
 		GROUP BY timestamp
 		ORDER BY timestamp ASC
-		WITH FILL STEP INTERVAL 1 HOUR
+		WITH FILL STEP INTERVAL 1 DAY
 		`)
 	if err != nil {
 		return nil, err
