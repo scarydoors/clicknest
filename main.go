@@ -40,17 +40,16 @@ func main() {
 
 	defer errorutil.DeferIgnoreErr(clickhouseDB.Close)
 
-	eventRepo := clickhouse.NewEventRepository(clickhouseDB, logger)
-	sessionRepo := clickhouse.NewSessionRepository(clickhouseDB, logger)
-
 	flushConfig := batchbuffer.FlushConfig{
 		Interval: 4 * time.Second,
 		Limit:    100000,
 		Timeout:  10 * time.Second,
 	}
+
+	eventRepo := clickhouse.NewEventRepository(clickhouseDB, logger)
+	sessionRepo := clickhouse.NewSessionRepository(clickhouseDB, logger)
 	sessionStore := sessionstore.NewStore(flushConfig, sessionRepo, logger)
 	ingestService := ingest.NewService(flushConfig, eventRepo, sessionStore, logger)
-	statsService := stats.NewService(logger)
 
 	if err := ingestService.Start(); err != nil {
 		log.Fatalf("unable to start ingest service workers: %s", err)
@@ -58,6 +57,9 @@ func main() {
 	if err := sessionStore.Start(); err != nil {
 		log.Fatalf("unable to start session store workers: %s", err)
 	}
+
+	statsRepo := clickhouse.NewStatsRepository(clickhouseDB, logger)
+	statsService := stats.NewService(statsRepo, logger)
 
 	srv := server.NewServer(logger, ingestService, statsService)
 

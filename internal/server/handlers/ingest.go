@@ -15,7 +15,7 @@ func RegisterIngestRoutes(apiMux *http.ServeMux, logger *slog.Logger, ingestServ
 	apiMux.Handle("POST /event", handleEventPost(ingestService, logger))
 }
 
-type EventRequest struct {
+type eventRequest struct {
 	Domain string `json:"domain"`
 	Kind   string `json:"kind"`
 	Url    string `json:"url"`
@@ -28,7 +28,7 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 		func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			var eventRequest EventRequest
+			var eventRequest eventRequest
 			if err := json.NewDecoder(r.Body).Decode(&eventRequest); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
