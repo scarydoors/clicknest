@@ -44,7 +44,7 @@ func (t timeseries) toPageviewResult() stats.Timeseries {
 func (s *StatsRepository) GetPageviews(ctx context.Context) (stats.Timeseries, error) {
 	rows, err := s.conn.Query(ctx, `
 		SELECT
-			toStartOfDay(timestamp) as timestamp,
+			toStartOfInterval(timestamp, INTERVAL 1 DAY) as timestamp,
 			count() AS value
 		FROM events
 		WHERE kind = 'pageview'
