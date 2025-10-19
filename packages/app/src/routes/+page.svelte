@@ -16,7 +16,14 @@ let loading = $state<boolean>(true);
 let data = $state<Timeseries | undefined>();
 
 onMount(() => {
-    fetch("http://localhost:6969/api/timeseries").then(async (resp) => {
+    let yesterday = new Date();
+    yesterday.setUTCDate(18);
+    fetch("http://localhost:6969/api/timeseries?" + new URLSearchParams({
+        "interval": "5m",
+        "start-date": yesterday.toISOString(),
+        "end-date": new Date().toISOString(),
+
+    }).toString()).then(async (resp) => {
         const json = await resp.json();
         data = json.map((t: {timestamp: string, value: number}) => ({ ...t, timestamp: new Date(t.timestamp) }))
         loading = false;
