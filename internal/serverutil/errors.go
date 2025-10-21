@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// TODO: application/problem+json support
 type apiError struct {
 
 }
