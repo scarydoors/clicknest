@@ -2,16 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/scarydoors/clicknest/internal/serverutil"
 	"github.com/scarydoors/clicknest/internal/stats"
 )
 
 func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, statsService *stats.Service) {
-	apiMux.Handle("GET /timeseries", handleTimeseriesGet(statsService, logger))
+	apiMux.Handle("GET /timeseries", serverutil.ServeErrors(handleTimeseriesGet(statsService, logger)))
 }
 
 type timeseriesResponsePoint struct {
@@ -33,70 +35,42 @@ func timeseriesToTimeseriesResponse(ts stats.Timeseries) timeseriesResponse {
 	return timeseriesResp
 }
 
-func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger) http.Handler {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
+func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger) serverutil.HandlerWithErrorFunc {
+	return serverutil.HandlerWithErrorFunc(
+		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
 
 			query := r.URL.Query()
 			interval := query.Get("interval")
 			if interval == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": "missing required query parameter: interval",
-				})
-				return;
+				return errors.New("missing required query parameter: interval");
 			}
 			intervalDur, err := time.ParseDuration(interval)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": "interval",
-				})
-				return;
+				return errors.New("interval");
 			}
 
 			startDate := query.Get("start-date")
 			if startDate == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": "missing required query parameter: start-date",
-				})
-				return;
+				return errors.New("missing required query parameter: interval");
 			}
 			startTime, err := time.Parse(time.RFC3339, startDate)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": "start-time",
-				})
-				return;
+				return errors.New("missing required query parameter: start-date");
 			}
 
 			endDate := query.Get("end-date")
 			if endDate == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": "missing required query parameter: end-date",
-				})
-				return;
+				return errors.New("missing required query parameter: end-date");
 			}
 			endTime, err := time.Parse(time.RFC3339, endDate)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": "end-time",
-				})
-				return;
+				return errors.New("missing required query parameter: interval");
 			}
 
 			dur := endTime.Sub(startTime);
 			estPoints := dur / intervalDur
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": strconv.FormatInt(int64(estPoints), 10),
-			})
-			return;
+			return errors.New(strconv.FormatInt(int64(estPoints), 10));
 
 			timeseries, err := statsService.GetPageviews(ctx)
 			if err != nil {
@@ -105,6 +79,8 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger) http.
 
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(timeseriesToTimeseriesResponse(timeseries))
+
+			return nil;
 		},
 	)
 }

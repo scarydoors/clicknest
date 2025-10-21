@@ -12,7 +12,7 @@ import (
 )
 
 func RegisterIngestRoutes(apiMux *http.ServeMux, logger *slog.Logger, ingestService *ingest.Service) {
-	apiMux.Handle("POST /event", handleEventPost(ingestService, logger))
+	apiMux.Handle("POST /event", serverutil.ServeErrors(handleEventPost(ingestService, logger)))
 }
 
 type eventRequest struct {
@@ -23,15 +23,14 @@ type eventRequest struct {
 	Data map[string]string `json:"data,omitempty"`
 }
 
-func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Handler {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
+func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) serverutil.HandlerWithErrorFunc {
+	return serverutil.HandlerWithErrorFunc(
+		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
 
 			var eventRequest eventRequest
 			if err := json.NewDecoder(r.Body).Decode(&eventRequest); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
+				return err
 			}
 
 			event, err := analytics.NewEvent(
@@ -46,16 +45,16 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) http.Ha
 			ip, err := serverutil.GetClientIP(r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
+				return nil
 			}
 			event.UserID = analytics.NewUserID(salt, event.Domain, ip, r.UserAgent())
 			slog.Info("userid logged","salt", salt, "domain", event.Domain, "ip", ip, "ua", r.UserAgent())
 
 			if err := ingestService.IngestEvent(ctx, event); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
+				return err
 			}
 			w.WriteHeader(http.StatusNoContent)
+			return nil
 		},
 	)
 }
