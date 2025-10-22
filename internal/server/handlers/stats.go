@@ -10,6 +10,7 @@ import (
 
 	"github.com/scarydoors/clicknest/internal/serverutil"
 	"github.com/scarydoors/clicknest/internal/stats"
+	//"github.com/go-playground/validator/v10"
 )
 
 func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, statsService *stats.Service) {
@@ -34,6 +35,19 @@ func timeseriesToTimeseriesResponse(ts stats.Timeseries) timeseriesResponse {
 
 	return timeseriesResp
 }
+
+// TODO: go-validator?
+// type timeseriesGetRawParameters struct {
+// 	startDate string
+// 	endDate string
+// 	interval string ``
+// }
+//
+// type timeseriesGetParameters struct {
+// 	startDate time.Time
+// 	endDate time.Time
+// 	interval time.Duration
+// }
 
 func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger) serverutil.HandlerWithErrorFunc {
 	return serverutil.HandlerWithErrorFunc(
