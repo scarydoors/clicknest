@@ -20,7 +20,7 @@ onMount(() => {
     yesterday.setUTCDate(18);
     fetch("http://localhost:6969/api/timeseries?" + new URLSearchParams({
         "interval": "5m",
-        "start-date": yesterday.toISOString(),
+        //"start-date": yesterday.toISOString(),
         "end-date": new Date().toISOString(),
 
     }).toString()).then(async (resp) => {

@@ -5,6 +5,9 @@ go 1.24.4
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.37.2
 	github.com/dchest/siphash v1.2.3
+	github.com/go-playground/locales v0.14.1
+	github.com/go-playground/universal-translator v0.18.1
+	github.com/go-playground/validator/v10 v10.28.0
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.10.0
@@ -38,9 +41,6 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.28.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
