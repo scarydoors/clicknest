@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"reflect"
 	//"errors"
 	"log/slog"
 	"net/http"
+
 	//"strconv"
 	"time"
 
@@ -51,6 +53,41 @@ type timeseriesGetRawParameters struct {
 	Parsed timeseriesGetParameters `validate:"-"`
 }
 
+func timeseriesGetRawParametersValidation(sl validator.StructLevel) {
+	rawParams := sl.Current().Interface().(timeseriesGetRawParameters)
+
+	startTime, err := time.Parse(time.RFC3339, rawParams.StartDate)
+	if err != nil {
+		panic(err)
+	}
+	endTime, err := time.Parse(time.RFC3339, rawParams.EndDate)
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: custom duration validation
+	interval, err := time.ParseDuration(rawParams.Interval)
+	if err != nil {
+		panic(err)
+	}
+
+	dur := endTime.Sub(startTime);
+	estPoints := dur / interval
+
+	if estPoints > 1000 {
+		sl.ReportError(rawParams.Interval, "interval", "interval", "intervalgranularity", "")
+	}
+
+	p := sl.Current().FieldByName("Parsed")
+	if p.IsValid() && p.CanSet() {
+		p.Set(reflect.ValueOf(timeseriesGetParameters{
+				startDate: startTime,
+				endDate: endTime,
+				interval: interval,
+			}))
+	}
+}
+
 type timeseriesGetParameters struct {
 	startDate time.Time
 	endDate time.Time
@@ -58,6 +95,8 @@ type timeseriesGetParameters struct {
 }
 
 func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, validator *validator.Validate) serverutil.HandlerWithErrorFunc {
+	validator.RegisterStructValidation(timeseriesGetRawParametersValidation, timeseriesGetRawParameters{});
+
 	return serverutil.HandlerWithErrorFunc(
 		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
@@ -72,13 +111,11 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, valid
 				EndDate: endDate,
 				Interval: interval,
 			}
-			err := validator.Struct(rawParams)
+
+			err := validator.Struct(&rawParams)
 			logger.Info("rawParams", slog.Any("struct", rawParams), slog.Any("yeah", err))
 			return err
 
-			//dur := endTime.Sub(startTime);
-			//estPoints := dur / intervalDur
-			//return errors.New(strconv.FormatInt(int64(estPoints), 10));
 
 			timeseries, err := statsService.GetPageviews(ctx)
 			if err != nil {
