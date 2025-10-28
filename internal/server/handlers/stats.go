@@ -3,6 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"reflect"
+	"strconv"
+	"strings"
+
 	//"errors"
 	"log/slog"
 	"net/http"
@@ -49,54 +52,103 @@ func timeseriesToTimeseriesResponse(ts stats.Timeseries) timeseriesResponse {
 type timeseriesGetRawParameters struct {
 	StartDate string `validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	EndDate string `validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
-	Interval string
-	Parsed timeseriesGetParameters `validate:"-"`
+	Interval string `validate:"required,duration"`
 }
 
-func timeseriesGetRawParametersValidation(sl validator.StructLevel) {
-	rawParams := sl.Current().Interface().(timeseriesGetRawParameters)
+func durationValidator(fl validator.FieldLevel) bool {
+	value := fl.Field().String();
 
-	startTime, err := time.Parse(time.RFC3339, rawParams.StartDate)
+	_, err := time.ParseDuration(value);
+	return err == nil;
+}
+
+func intervalGranularityValidator(fl validator.FieldLevel) bool {
+	param := fl.Param()
+
+	parts := strings.Split(param, ":")
+	if len(parts) != 2 {
+		return false
+	}
+
+	fieldsPart := parts[0]
+	granularityPart := parts[1]
+
+	granularity, err := strconv.Atoi(granularityPart)	
 	if err != nil {
-		panic(err)
-	}
-	endTime, err := time.Parse(time.RFC3339, rawParams.EndDate)
-	if err != nil {
-		panic(err)
+		return false
 	}
 
-	// TODO: custom duration validation
-	interval, err := time.ParseDuration(rawParams.Interval)
-	if err != nil {
-		panic(err)
+	fields := strings.Split(fieldsPart, "~")
+	if len(fields) != 2 {
+		return false
+	}
+	minFieldName := strings.TrimSpace(fields[0])
+	maxFieldName := strings.TrimSpace(fields[1])
+
+	parent := fl.Parent()
+	minField := parent.FieldByName(minFieldName)
+	maxField := parent.FieldByName(maxFieldName)
+
+	if !minField.IsValid() || !maxField.IsValid() {
+		return false
 	}
 
-	dur := endTime.Sub(startTime);
-	estPoints := dur / interval
+	timeType := reflect.TypeOf(time.Time{}) 
+	if minField.Type() != timeType || maxField.Type() != timeType {
+		return false
+	}
+	minTime := minField.Interface().(time.Time)
+	maxTime := maxField.Interface().(time.Time)
 
-	if estPoints > 1000 {
-		sl.ReportError(rawParams.Interval, "interval", "interval", "intervalgranularity", "")
+	field := fl.Field()
+	if field.Kind() != reflect.Int64 {
+		return false
+	}
+	interval := time.Duration(field.Int())
+
+	timeRange := maxTime.Sub(minTime)
+
+	granules := timeRange / interval
+	if int(granules) > granularity {
+		return false
 	}
 
-	p := sl.Current().FieldByName("Parsed")
-	if p.IsValid() && p.CanSet() {
-		p.Set(reflect.ValueOf(timeseriesGetParameters{
-				startDate: startTime,
-				endDate: endTime,
-				interval: interval,
-			}))
-	}
+
+	return true
 }
 
 type timeseriesGetParameters struct {
-	startDate time.Time
-	endDate time.Time
-	interval time.Duration
+	StartDate time.Time
+	EndDate time.Time
+	Interval time.Duration `validate:"interval_granularity=StartDate~EndDate:1000"`
+}
+
+func timeseriesGetParamsFromRawParams(rawParams timeseriesGetRawParameters) (timeseriesGetParameters, error) {
+	startDate, err := time.Parse(time.RFC3339, rawParams.StartDate)
+	if err != nil {
+		return timeseriesGetParameters{}, err
+	}
+
+	endDate, err := time.Parse(time.RFC3339, rawParams.EndDate)
+	if err != nil {
+		return timeseriesGetParameters{}, err
+	}
+
+	interval, err := time.ParseDuration(rawParams.Interval)
+	if err != nil {
+		return timeseriesGetParameters{}, err
+	}
+
+	return timeseriesGetParameters{
+		StartDate: startDate,
+		EndDate: endDate,
+		Interval: interval,
+	}, nil
 }
 
 func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, validator *validator.Validate) serverutil.HandlerWithErrorFunc {
-	validator.RegisterStructValidation(timeseriesGetRawParametersValidation, timeseriesGetRawParameters{});
-
+	validator.RegisterValidation("duration", durationValidator, false)
+	validator.RegisterValidation("interval_granularity", intervalGranularityValidator, false)
 	return serverutil.HandlerWithErrorFunc(
 		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
@@ -107,17 +159,30 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, valid
 			interval := query.Get("interval")
 
 			rawParams := timeseriesGetRawParameters{
-				StartDate: startDate,
+				StartDate: startDate, 
 				EndDate: endDate,
 				Interval: interval,
 			}
 
-			err := validator.Struct(&rawParams)
-			logger.Info("rawParams", slog.Any("struct", rawParams), slog.Any("yeah", err))
+			err := validator.Struct(rawParams)
+			if err != nil {
+				return err
+			}
+
+			params, err := timeseriesGetParamsFromRawParams(rawParams)
+			if err != nil {
+				return err
+			}
+
+			err = validator.Struct(params)
+			if err != nil {
+				return err
+			}
+			
 			return err
 
 
-			timeseries, err := statsService.GetPageviews(ctx)
+			timeseries, err := statsService.GetPageviews(ctx);
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
