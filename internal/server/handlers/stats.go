@@ -2,9 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"reflect"
-	"strconv"
-	"strings"
 
 	//"errors"
 	"log/slog"
@@ -21,12 +18,7 @@ import (
 	//en_translations "github.com/go-playground/validator/v10/translations/en"
 )
 
-func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, statsService *stats.Service) {
-	//en := en.New()
-	//uni := ut.New(en, en)
-
-	//trans, _ := uni.GetTranslator("en")
-	validate := validator.New()
+func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, validate *validator.Validate, statsService *stats.Service) {
 	apiMux.Handle("GET /timeseries", serverutil.ServeErrors(handleTimeseriesGet(statsService, logger, validate)))
 }
 
@@ -53,68 +45,6 @@ type timeseriesGetRawParameters struct {
 	StartDate string `validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	EndDate string `validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	Interval string `validate:"required,duration"`
-}
-
-func durationValidator(fl validator.FieldLevel) bool {
-	value := fl.Field().String();
-
-	_, err := time.ParseDuration(value);
-	return err == nil;
-}
-
-func intervalGranularityValidator(fl validator.FieldLevel) bool {
-	param := fl.Param()
-
-	parts := strings.Split(param, ":")
-	if len(parts) != 2 {
-		return false
-	}
-
-	fieldsPart := parts[0]
-	granularityPart := parts[1]
-
-	granularity, err := strconv.Atoi(granularityPart)	
-	if err != nil {
-		return false
-	}
-
-	fields := strings.Split(fieldsPart, "~")
-	if len(fields) != 2 {
-		return false
-	}
-	minFieldName := strings.TrimSpace(fields[0])
-	maxFieldName := strings.TrimSpace(fields[1])
-
-	parent := fl.Parent()
-	minField := parent.FieldByName(minFieldName)
-	maxField := parent.FieldByName(maxFieldName)
-
-	if !minField.IsValid() || !maxField.IsValid() {
-		return false
-	}
-
-	timeType := reflect.TypeOf(time.Time{}) 
-	if minField.Type() != timeType || maxField.Type() != timeType {
-		return false
-	}
-	minTime := minField.Interface().(time.Time)
-	maxTime := maxField.Interface().(time.Time)
-
-	field := fl.Field()
-	if field.Kind() != reflect.Int64 {
-		return false
-	}
-	interval := time.Duration(field.Int())
-
-	timeRange := maxTime.Sub(minTime)
-
-	granules := timeRange / interval
-	if int(granules) > granularity {
-		return false
-	}
-
-
-	return true
 }
 
 type timeseriesGetParameters struct {
@@ -146,9 +76,7 @@ func timeseriesGetParamsFromRawParams(rawParams timeseriesGetRawParameters) (tim
 	}, nil
 }
 
-func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, validator *validator.Validate) serverutil.HandlerWithErrorFunc {
-	validator.RegisterValidation("duration", durationValidator, false)
-	validator.RegisterValidation("interval_granularity", intervalGranularityValidator, false)
+func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, validate *validator.Validate) serverutil.HandlerWithErrorFunc {
 	return serverutil.HandlerWithErrorFunc(
 		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
@@ -164,7 +92,7 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, valid
 				Interval: interval,
 			}
 
-			err := validator.Struct(rawParams)
+			err := validate.Struct(rawParams)
 			if err != nil {
 				return err
 			}
@@ -174,7 +102,7 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, valid
 				return err
 			}
 
-			err = validator.Struct(params)
+			err = validate.Struct(params)
 			if err != nil {
 				return err
 			}

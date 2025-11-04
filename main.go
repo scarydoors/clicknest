@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/scarydoors/clicknest/internal/batchbuffer"
 	"github.com/scarydoors/clicknest/internal/clickhouse"
 	"github.com/scarydoors/clicknest/internal/errorutil"
@@ -17,6 +18,7 @@ import (
 	"github.com/scarydoors/clicknest/internal/server"
 	"github.com/scarydoors/clicknest/internal/sessionstore"
 	"github.com/scarydoors/clicknest/internal/stats"
+	"github.com/scarydoors/clicknest/internal/validatorutil"
 	"github.com/scarydoors/clicknest/internal/workerutil"
 )
 
@@ -61,7 +63,10 @@ func main() {
 	statsRepo := clickhouse.NewStatsRepository(clickhouseDB, logger)
 	statsService := stats.NewService(statsRepo, logger)
 
-	srv := server.NewServer(logger, ingestService, statsService)
+	validate := validator.New()
+	validatorutil.SetupCustomValidations(validate, logger)
+
+	srv := server.NewServer(logger, validate, ingestService, statsService)
 
 	httpServer := http.Server{
 		Addr:    ":6969",
