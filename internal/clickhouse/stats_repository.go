@@ -57,12 +57,14 @@ func (s *StatsRepository) GetPageviews(ctx context.Context, params stats.GetTime
 		WHERE kind = 'pageview'
 		AND timestamp >= {start_date: DateTime}
 		AND timestamp <= {end_date: DateTime}
+		AND domain = {domain: String}
 		GROUP BY timestamp
 		ORDER BY timestamp ASC
 		WITH FILL STEP INTERVAL {interval: UInt64} SECONDS`,
 		clickhouse.Named("start_date", params.StartDate.Format("2006-01-02 15:04:05")),
 		clickhouse.Named("end_date", params.EndDate.Format("2006-01-02 15:04:05")),
 		clickhouse.Named("interval", strconv.FormatUint(intervalSeconds, 10)),
+		clickhouse.Named("domain", params.Domain),
 	)
 	if err != nil {
 		return nil, err

@@ -34,6 +34,7 @@ type TimeseriesPoint struct {
 type Timeseries []TimeseriesPoint
 
 type GetTimeseriesParameters struct {
+	Domain string
 	StartDate time.Time
 	EndDate time.Time
 	Interval time.Duration `validate:"interval_granularity=StartDate~EndDate:1000"`
