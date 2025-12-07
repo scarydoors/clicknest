@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"context"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -43,6 +44,11 @@ func (t timeseries) toPageviewResult() stats.Timeseries {
 
 
 func (s *StatsRepository) GetPageviews(ctx context.Context, params stats.GetTimeseriesParameters) (stats.Timeseries, error) {
+	intervalSeconds, err := DurationToIntervalSeconds(params.Interval)
+	if err != nil {
+		return stats.Timeseries{}, err
+	}
+
 	rows, err := s.conn.Query(ctx, `
 		SELECT
 			toStartOfInterval(timestamp, INTERVAL 1 DAY) as timestamp,
@@ -53,9 +59,10 @@ func (s *StatsRepository) GetPageviews(ctx context.Context, params stats.GetTime
 		AND timestamp <= {end_date: DateTime}
 		GROUP BY timestamp
 		ORDER BY timestamp ASC
-		WITH FILL STEP INTERVAL 1 DAY`,
+		WITH FILL STEP INTERVAL {interval: UInt64} SECONDS`,
 		clickhouse.Named("start_date", params.StartDate.Format("2006-01-02 15:04:05")),
 		clickhouse.Named("end_date", params.EndDate.Format("2006-01-02 15:04:05")),
+		clickhouse.Named("interval", strconv.FormatUint(intervalSeconds, 10)),
 	)
 	if err != nil {
 		return nil, err
