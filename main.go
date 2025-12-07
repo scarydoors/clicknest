@@ -60,11 +60,11 @@ func main() {
 		log.Fatalf("unable to start session store workers: %s", err)
 	}
 
-	statsRepo := clickhouse.NewStatsRepository(clickhouseDB, logger)
-	statsService := stats.NewService(statsRepo, logger)
-
 	validate := validator.New()
 	validatorutil.SetupCustomValidations(validate, logger)
+
+	statsRepo := clickhouse.NewStatsRepository(clickhouseDB, logger)
+	statsService := stats.NewService(statsRepo, logger, validate)
 
 	srv := server.NewServer(logger, validate, ingestService, statsService)
 

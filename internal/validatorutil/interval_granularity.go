@@ -86,7 +86,6 @@ func makeIntervalGranularityValidator(cache *paramCache, logger *slog.Logger) fu
 			return false
 		}
 
-
 		return true
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/scarydoors/clicknest/internal/errorutil"
 	"github.com/scarydoors/clicknest/internal/stats"
@@ -41,17 +42,21 @@ func (t timeseries) toPageviewResult() stats.Timeseries {
 }
 
 
-func (s *StatsRepository) GetPageviews(ctx context.Context) (stats.Timeseries, error) {
+func (s *StatsRepository) GetPageviews(ctx context.Context, params stats.GetTimeseriesParameters) (stats.Timeseries, error) {
 	rows, err := s.conn.Query(ctx, `
 		SELECT
 			toStartOfInterval(timestamp, INTERVAL 1 DAY) as timestamp,
 			count() AS value
 		FROM events
 		WHERE kind = 'pageview'
+		AND timestamp >= {start_date: DateTime}
+		AND timestamp <= {end_date: DateTime}
 		GROUP BY timestamp
 		ORDER BY timestamp ASC
-		WITH FILL STEP INTERVAL 1 DAY
-		`)
+		WITH FILL STEP INTERVAL 1 DAY`,
+		clickhouse.Named("start_date", params.StartDate.Format("2006-01-02 15:04:05")),
+		clickhouse.Named("end_date", params.EndDate.Format("2006-01-02 15:04:05")),
+	)
 	if err != nil {
 		return nil, err
 	}

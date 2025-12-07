@@ -4,31 +4,45 @@ import (
 	"context"
 	"log/slog"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type Service struct {
 	storage Storage
 	logger *slog.Logger
+	validate *validator.Validate 
 }
 
 type Storage interface {
-	GetPageviews(ctx context.Context) (Timeseries, error)
+	GetPageviews(ctx context.Context, params GetTimeseriesParameters) (Timeseries, error)
 }
 
-func NewService(storage Storage, logger *slog.Logger) *Service {
+func NewService(storage Storage, logger *slog.Logger, validate *validator.Validate) *Service {
 	return &Service{
 		storage: storage,
 		logger: logger,
+		validate: validate,
 	}
 }
 
 type TimeseriesPoint struct {
-	Timestamp time.Time
-	Value uint64
+	Timestamp time.Time `json:"timestamp"`
+	Value uint64 `json:"value"`
 }
 
 type Timeseries []TimeseriesPoint
 
-func (s *Service) GetPageviews(ctx context.Context) (Timeseries, error) {
-	return s.storage.GetPageviews(ctx)
+type GetTimeseriesParameters struct {
+	StartDate time.Time
+	EndDate time.Time
+	Interval time.Duration `validate:"interval_granularity=StartDate~EndDate:1000"`
+}
+
+func (s *Service) GetTimeseries(ctx context.Context, params GetTimeseriesParameters) (Timeseries, error) {
+	if err := s.validate.Struct(params); err != nil {
+		return Timeseries{}, err;
+	}
+
+	return s.storage.GetPageviews(ctx, params)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 
 	//"errors"
 	"log/slog"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/scarydoors/clicknest/internal/serverutil"
 	"github.com/scarydoors/clicknest/internal/stats"
+	"github.com/gorilla/schema"
 	//"github.com/go-playground/locales/en"
 	//ut "github.com/go-playground/universal-translator"
 	//en_translations "github.com/go-playground/validator/v10/translations/en"
@@ -22,54 +24,29 @@ func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, validate *v
 	apiMux.Handle("GET /timeseries", serverutil.ServeErrors(handleTimeseriesGet(statsService, logger, validate)))
 }
 
-type timeseriesResponsePoint struct {
-	Timestamp time.Time `json:"timestamp"`
-	Value uint64 `json:"value"`
-}
-
-type timeseriesResponse []timeseriesResponsePoint
-
-func timeseriesToTimeseriesResponse(ts stats.Timeseries) timeseriesResponse {
-	timeseriesResp := make(timeseriesResponse, 0, len(ts))
-	for _, t := range ts {
-		timeseriesResp = append(timeseriesResp, timeseriesResponsePoint{
-			Timestamp: t.Timestamp,
-			Value: t.Value,
-		})
-	}
-
-	return timeseriesResp
-}
-
 type timeseriesGetRawParameters struct {
-	StartDate string `validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
-	EndDate string `validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
-	Interval string `validate:"required,duration"`
+	StartDate string `schema:"start_date" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
+	EndDate string `schema:"end_date" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
+	Interval string `schema:"interval" validate:"required,duration"`
 }
 
-type timeseriesGetParameters struct {
-	StartDate time.Time
-	EndDate time.Time
-	Interval time.Duration `validate:"interval_granularity=StartDate~EndDate:1000"`
-}
-
-func timeseriesGetParamsFromRawParams(rawParams timeseriesGetRawParameters) (timeseriesGetParameters, error) {
-	startDate, err := time.Parse(time.RFC3339, rawParams.StartDate)
+func (t timeseriesGetRawParameters) ToParams() (stats.GetTimeseriesParameters, error) {
+	startDate, err := time.Parse(time.RFC3339, t.StartDate)
 	if err != nil {
-		return timeseriesGetParameters{}, err
+		return stats.GetTimeseriesParameters{}, err
 	}
 
-	endDate, err := time.Parse(time.RFC3339, rawParams.EndDate)
+	endDate, err := time.Parse(time.RFC3339, t.EndDate)
 	if err != nil {
-		return timeseriesGetParameters{}, err
+		return stats.GetTimeseriesParameters{}, err
 	}
 
-	interval, err := time.ParseDuration(rawParams.Interval)
+	interval, err := time.ParseDuration(t.Interval)
 	if err != nil {
-		return timeseriesGetParameters{}, err
+		return stats.GetTimeseriesParameters{}, err
 	}
 
-	return timeseriesGetParameters{
+	return stats.GetTimeseriesParameters{
 		StartDate: startDate,
 		EndDate: endDate,
 		Interval: interval,
@@ -81,42 +58,30 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, valid
 		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
 
-			query := r.URL.Query()
-			startDate := query.Get("start-date")
-			endDate := query.Get("end-date")
-			interval := query.Get("interval")
+			decoder := schema.NewDecoder()
 
-			rawParams := timeseriesGetRawParameters{
-				StartDate: startDate, 
-				EndDate: endDate,
-				Interval: interval,
+			var rawParams timeseriesGetRawParameters
+			if err := decoder.Decode(&rawParams, r.URL.Query()); err != nil {
+				return err
 			}
 
-			err := validate.Struct(rawParams)
+			if err := validate.Struct(rawParams); err != nil {
+				return err
+			}
+
+			params, err := rawParams.ToParams()
 			if err != nil {
 				return err
 			}
 
-			params, err := timeseriesGetParamsFromRawParams(rawParams)
+			timeseries, err := statsService.GetTimeseries(ctx, params);
+			fmt.Printf("%+v\n", timeseries)
 			if err != nil {
 				return err
-			}
-
-			err = validate.Struct(params)
-			if err != nil {
-				return err
-			}
-			
-			return err
-
-
-			timeseries, err := statsService.GetPageviews(ctx);
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(timeseriesToTimeseriesResponse(timeseries))
+			json.NewEncoder(w).Encode(timeseries)
 
 			return nil;
 		},

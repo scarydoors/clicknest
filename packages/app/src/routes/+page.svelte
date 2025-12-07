@@ -19,9 +19,9 @@ onMount(() => {
     let yesterday = new Date();
     yesterday.setUTCDate(27);
     fetch("http://localhost:6969/api/timeseries?" + new URLSearchParams({
-        "interval": "2s",
-        "start-date": yesterday.toISOString(),
-        "end-date": new Date().toISOString(),
+        "interval": "2h",
+        "start_date": yesterday.toISOString(),
+        "end_date": new Date().toISOString(),
 
     }).toString()).then(async (resp) => {
         const json = await resp.json();
