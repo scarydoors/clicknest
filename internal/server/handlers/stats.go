@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 
 	//"errors"
 	"log/slog"
@@ -25,6 +24,7 @@ func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, validate *v
 }
 
 type timeseriesGetRawParameters struct {
+	Domain string `schema:"domain" validate:"required"`
 	StartDate string `schema:"start_date" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	EndDate string `schema:"end_date" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	Interval string `schema:"interval" validate:"required,duration"`
@@ -47,6 +47,7 @@ func (t timeseriesGetRawParameters) ToParams() (stats.GetTimeseriesParameters, e
 	}
 
 	return stats.GetTimeseriesParameters{
+		Domain: t.Domain,
 		StartDate: startDate,
 		EndDate: endDate,
 		Interval: interval,
@@ -75,7 +76,6 @@ func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, valid
 			}
 
 			timeseries, err := statsService.GetTimeseries(ctx, params);
-			fmt.Printf("%+v\n", timeseries)
 			if err != nil {
 				return err
 			}

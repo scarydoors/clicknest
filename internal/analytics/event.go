@@ -43,6 +43,10 @@ func parseURL(rawUrl string) (parsedURL, error) {
 		return parsedURL{}, fmt.Errorf("parse url: %w", err)
 	}
 
+	if u.Scheme == "" || u.Host == "" || u.Path == "" {
+		return parsedURL{}, fmt.Errorf("parse url: invalid url: no scheme, host, or path");
+	}
+
 	// truncate trailing '/' to avoid counting /path and /path/ as seperate paths
 	pathname := u.Path
 	if last := len(pathname) - 1; last > 0 && pathname[last] == '/' {

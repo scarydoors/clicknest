@@ -34,7 +34,7 @@ type TimeseriesPoint struct {
 type Timeseries []TimeseriesPoint
 
 type GetTimeseriesParameters struct {
-	Domain string
+	Domain string `validate:"required"`
 	StartDate time.Time
 	EndDate time.Time
 	Interval time.Duration `validate:"interval_granularity=StartDate~EndDate:1000"`
@@ -45,5 +45,6 @@ func (s *Service) GetTimeseries(ctx context.Context, params GetTimeseriesParamet
 		return Timeseries{}, err;
 	}
 
+	s.logger.Info("GetTimeseries", slog.Any("params", params))
 	return s.storage.GetPageviews(ctx, params)
 }

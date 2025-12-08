@@ -51,7 +51,7 @@ func (s *StatsRepository) GetPageviews(ctx context.Context, params stats.GetTime
 
 	rows, err := s.conn.Query(ctx, `
 		SELECT
-			toStartOfInterval(timestamp, INTERVAL 1 DAY) as timestamp,
+			toStartOfInterval(timestamp, INTERVAL {interval: UInt64} SECONDS) as timestamp,
 			count() AS value
 		FROM events
 		WHERE kind = 'pageview'

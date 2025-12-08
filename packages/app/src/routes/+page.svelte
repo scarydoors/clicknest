@@ -17,11 +17,14 @@ let data = $state<Timeseries | undefined>();
 
 onMount(() => {
     let yesterday = new Date();
-    yesterday.setUTCDate(27);
+    yesterday.setUTCDate(6);
+    let tomorrow = new Date();
+    tomorrow.setUTCDate(9)
     fetch("http://localhost:6969/api/timeseries?" + new URLSearchParams({
-        "interval": "2h",
+        "domain": "stupidwebsite.com",
+        "interval": "1m",
         "start_date": yesterday.toISOString(),
-        "end_date": new Date().toISOString(),
+        "end_date": tomorrow.toISOString(),
 
     }).toString()).then(async (resp) => {
         const json = await resp.json();
