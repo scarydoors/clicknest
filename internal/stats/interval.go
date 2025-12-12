@@ -2,7 +2,6 @@ package stats
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"unicode"
 )
@@ -40,6 +39,10 @@ type Interval struct {
 var ErrInvalidInterval = errors.New("invalid interval")
 
 func ParseInterval(s string) (Interval, error) {
+	if s == "" {
+		return Interval{}, ErrInvalidInterval
+	}
+
 	var splitIdx int = -1
 	for i, r := range s {
 		if unicode.IsLetter(r) {
