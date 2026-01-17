@@ -67,7 +67,7 @@ func main() {
 		events = append(events, startEv)
 
 		for range(rand.Int32N(500)) {
-			timestamp := timestamp.Add(time.Duration(rand.Uint64N(30) * uint64(time.Minute)))
+			timestamp = timestamp.Add(time.Duration(rand.Uint64N(30) * uint64(time.Minute)))
 			ev, err := analytics.NewEvent(timestamp, domain, analytics.EventKindPageview, fullPathFn(pages[rand.IntN(len(pages))]))
 			ev.UserID = userID
 			if err != nil {

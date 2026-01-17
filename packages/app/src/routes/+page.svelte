@@ -17,12 +17,12 @@ let data = $state<Timeseries | undefined>();
 
 onMount(() => {
     let yesterday = new Date();
-    yesterday.setUTCDate(6);
+    yesterday.setUTCDate(16);
     let tomorrow = new Date();
-    tomorrow.setUTCDate(9)
+    tomorrow.setUTCDate(17)
     fetch("http://localhost:6969/api/timeseries?" + new URLSearchParams({
         "domain": "stupidwebsite.com",
-        "interval": "1m",
+        "interval": "1h",
         "start_date": yesterday.toISOString(),
         "end_date": tomorrow.toISOString(),
 
@@ -37,8 +37,8 @@ onMount(() => {
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
 
-<Card.Root>
-    <Chart.Container config={chartConfig}>
+<Card.Root class="w-256">
+    <Chart.Container config={chartConfig} class="w-full">
         <AreaChart
             x="timestamp"
             series={[
@@ -57,7 +57,11 @@ onMount(() => {
                     line: { class: "stroke-1" },
                 },
                 xAxis: {
-                    format: (v: Date) => v.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+                    format: (v: Date) =>
+                        v.toLocaleTimeString(undefined, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        }),
                     ticks: data?.length ?? 0
                 },
                 yAxis: { format: () => "" },
