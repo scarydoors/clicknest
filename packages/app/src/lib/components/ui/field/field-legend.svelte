@@ -5,19 +5,25 @@
 	let {
 		ref = $bindable(null),
 		class: className,
+		variant = "legend",
 		children,
 		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
+	}: WithElementRef<HTMLAttributes<HTMLLegendElement>> & {
+		variant?: "legend" | "label";
+	} = $props();
 </script>
 
-<div
+<legend
 	bind:this={ref}
-	data-slot="card-header"
+	data-slot="field-legend"
+	data-variant={variant}
 	class={cn(
-		"@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+		"mb-3 font-medium",
+		"data-[variant=legend]:text-base",
+		"data-[variant=label]:text-sm",
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
-</div>
+</legend>
