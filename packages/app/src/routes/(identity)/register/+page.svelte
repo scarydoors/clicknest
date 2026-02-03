@@ -25,5 +25,33 @@ const flowStore = new FlowStore(
 )
 
 $inspect(flowStore.flow);
+
+      async function submitRegistration() {
+    const res = await fetch(
+      'http://localhost:4433/self-service/registration?flow=101d13eb-e987-49f8-b593-8e4a1c4d9873',
+      {
+        method: 'POST',
+        credentials: 'include', // REQUIRED for Kratos browser flows
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          method: 'profile',
+          csrf_token: 'zGiQgDDuDmATrUJqZ4VyTiA33UoRtThopAV+Fe81RfA=',
+          traits: {
+            email: 'test.user@example.com',
+            name: {
+              first: 'Test',
+              last: 'User'
+            }
+          }
+        })
+      }
+    );
+
+    const data = await res.json();
+    console.log('Kratos response:', data);
+}
 </script>
 
+<button on:click={submitRegistration}>test</button>
