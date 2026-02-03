@@ -1,6 +1,6 @@
 <script lang="ts">
 import { PUBLIC_KRATOS_API_URL } from "$env/static/public"
-import { Configuration, FlowType, FrontendApi } from "@ory/client-fetch";
+import { Configuration, FlowType, FrontendApi, type UiNodeInputAttributes } from "@ory/client-fetch";
 	import { FlowStore } from "../stores/flow-store.svelte";
 
 const frontendClient = new FrontendApi(
@@ -13,45 +13,35 @@ const frontendClient = new FrontendApi(
     })
 )
 
-const flowStore = new FlowStore(
-    FlowType.Registration,
-    (params) => frontendClient.createBrowserRegistrationFlowRaw({
+const flowStore = new FlowStore({
+    flowType: FlowType.Registration,
+    createFlow: (params) => frontendClient.createBrowserRegistrationFlowRaw({
         returnTo: params.get("returnTo") ?? undefined,
         loginChallenge: params.get("loginChallenge") ?? undefined,
         afterVerificationReturnTo: params.get("afterVerificationReturnTo") ?? undefined,
         organization: params.get("organization") ?? undefined,
     }),
-    (id) => frontendClient.getRegistrationFlowRaw({ id })
-)
+    getFlow: (id) => frontendClient.getRegistrationFlowRaw({ id }),
+    updateFlow: (id, body) => frontendClient.updateRegistrationFlowRaw({
+        flow: id,
+        updateRegistrationFlowBody: body
+    })
+})
 
-$inspect(flowStore.flow);
-
-      async function submitRegistration() {
-    const res = await fetch(
-      'http://localhost:4433/self-service/registration?flow=101d13eb-e987-49f8-b593-8e4a1c4d9873',
-      {
-        method: 'POST',
-        credentials: 'include', // REQUIRED for Kratos browser flows
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          method: 'profile',
-          csrf_token: 'zGiQgDDuDmATrUJqZ4VyTiA33UoRtThopAV+Fe81RfA=',
-          traits: {
-            email: 'test.user@example.com',
+function update() {
+    flowStore.updateFlow({
+        method: "profile",
+        traits: {
+            email: "what@email.com",
             name: {
-              first: 'Test',
-              last: 'User'
+                first: "yeah",
+                last: "nah",
             }
-          }
-        })
-      }
-    );
-
-    const data = await res.json();
-    console.log('Kratos response:', data);
+        },
+        csrf_token: "uakS0RAwm3StSU/fUy8qs1hV6bW3S7tFqFcfqpoP19I="
+    })
 }
+$inspect(flowStore.flow);
 </script>
 
-<button on:click={submitRegistration}>test</button>
+<button onclick={update}>test</button>
