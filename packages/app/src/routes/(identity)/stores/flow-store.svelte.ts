@@ -1,10 +1,9 @@
 import { handleFlowError, type ApiResponse, type FlowType, type RegistrationFlow, type SuccessfulNativeRegistration, type UpdateRegistrationFlowBody } from "@ory/client-fetch";
 import { page } from "$app/state";
 import { goto } from "$app/navigation";
+import { getContext, setContext } from "svelte";
 
-type Flow = {
-    id: string;
-}
+export type Flow = RegistrationFlow;
 
 type UpdateBody<T extends Flow> =
     T extends RegistrationFlow ? UpdateRegistrationFlowBody :
@@ -14,7 +13,7 @@ type UpdateResponse<T extends Flow> =
     T extends RegistrationFlow ? SuccessfulNativeRegistration :
     never;
 
-type FlowStoreConfig<T extends Flow> = {
+type FlowStoreProps<T extends Flow> = {
     flowType: FlowType,
     createFlow: (params: URLSearchParams) => Promise<ApiResponse<T>>,
     getFlow: (id: string) => Promise<ApiResponse<T>>,
@@ -33,7 +32,7 @@ export class FlowStore<T extends Flow> {
         createFlow,
         getFlow,
         updateFlow
-    }: FlowStoreConfig<T>) {
+    }: FlowStoreProps<T>) {
         const errorHandler = handleFlowError({
             onValidationError: () => {},
             // TODO: onRestartFlow, use ory/kratos built-in flow redirect URLs?
@@ -96,4 +95,14 @@ export class FlowStore<T extends Flow> {
             noScroll: true,
         })
     }
+}
+
+const SYMBOL_KEY = "identity-flow-store";
+
+export function setFlowStore<T extends Flow>(flowStoreProps: FlowStoreProps<T>): FlowStore<T> {
+    return setContext(Symbol.for(SYMBOL_KEY), new FlowStore(flowStoreProps))
+}
+
+export function getFlowStore<T extends Flow>(): FlowStore<T> {
+    return getContext(Symbol.for(SYMBOL_KEY))
 }

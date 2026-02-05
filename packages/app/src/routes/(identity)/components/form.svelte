@@ -1,0 +1,30 @@
+<script lang="ts">
+import * as Card from "$lib/components/ui/card/index.js";
+	import * as Field from "$lib/components/ui/field/index";
+import { getFlowStore } from "../stores/flow-store.svelte";
+import { setFormStore } from "../stores/form-store.svelte";
+import Node from "./node.svelte";
+
+const flowStore = getFlowStore()
+const formStore = setFormStore()
+const { enhance } = formStore.superForm
+
+
+let nodes = $derived(flowStore.flow?.ui.nodes);
+</script>
+
+<Card.Root>
+    <Card.Header>
+		<Card.Title>Create an account</Card.Title>
+		<Card.Description>Enter your information below to create your account</Card.Description>
+    </Card.Header>
+    <Card.Content>
+        <form use:enhance method="POST">
+            <Field.Group>
+                {#each nodes as node}
+                    <Node node={node}/>
+                {/each}
+            </Field.Group>
+        </form>
+    </Card.Content>
+</Card.Root>

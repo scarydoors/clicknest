@@ -1,7 +1,8 @@
 <script lang="ts">
 import { PUBLIC_KRATOS_API_URL } from "$env/static/public"
-import { Configuration, FlowType, FrontendApi, type UiNodeInputAttributes } from "@ory/client-fetch";
-	import { FlowStore } from "../stores/flow-store.svelte";
+import { Configuration, FlowType, FrontendApi } from "@ory/client-fetch";
+import { setFlowStore } from "../stores/flow-store.svelte";
+import Form from "../components/form.svelte";
 
 const frontendClient = new FrontendApi(
     new Configuration({
@@ -13,7 +14,7 @@ const frontendClient = new FrontendApi(
     })
 )
 
-const flowStore = new FlowStore({
+const flowStore = setFlowStore({
     flowType: FlowType.Registration,
     createFlow: (params) => frontendClient.createBrowserRegistrationFlowRaw({
         returnTo: params.get("returnTo") ?? undefined,
@@ -27,21 +28,9 @@ const flowStore = new FlowStore({
         updateRegistrationFlowBody: body
     })
 })
-
-function update() {
-    flowStore.updateFlow({
-        method: "profile",
-        traits: {
-            email: "what@email.com",
-            name: {
-                first: "yeah",
-                last: "nah",
-            }
-        },
-        csrf_token: "uakS0RAwm3StSU/fUy8qs1hV6bW3S7tFqFcfqpoP19I="
-    })
-}
-$inspect(flowStore.flow);
 </script>
 
-<button onclick={update}>test</button>
+{#if flowStore.flow}
+    <Form>
+    </Form>
+{/if}
