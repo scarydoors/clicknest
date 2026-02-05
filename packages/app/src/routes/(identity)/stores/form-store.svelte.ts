@@ -1,8 +1,7 @@
 import { getContext, setContext } from "svelte";
 import { getFlowStore } from "./flow-store.svelte";
 import { superForm } from "$lib/utils";
-import { getDefaultValues, type FormValues } from "../utils/form";
-import type { SuperForm } from "sveltekit-superforms";
+import { getDefaultValues, transformIntoNestedForm, type FormValues } from "../utils/form";
 import type { UpdateRegistrationFlowBody } from "@ory/client-fetch";
 
 export class FormStore {
@@ -16,11 +15,16 @@ export class FormStore {
             {
                 validators: false,
                 onUpdate({ form }) {
-                    if (form.valid) {
-                        flowStore.updateFlow(
-                            form.data as unknown as UpdateRegistrationFlowBody
-                        )
+                    if (!form.valid) {
+                        return;
                     }
+
+                    console.log(transformIntoNestedForm(form.data as unknown as FormValues));
+
+                    // TODO: fix this casting disaster
+                    flowStore.updateFlow(
+                        transformIntoNestedForm(form.data as unknown as FormValues) as unknown as UpdateRegistrationFlowBody
+                    )
                 }
             }
         )

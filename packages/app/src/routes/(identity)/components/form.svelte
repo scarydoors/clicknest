@@ -9,10 +9,15 @@ const flowStore = getFlowStore()
 const formStore = setFormStore()
 const { enhance } = formStore.superForm
 
-
 let nodes = $derived(flowStore.flow?.ui.nodes);
+
+
+
 </script>
 
+<!-- TODO: dynamic title, description -->
+<!-- TODO: different card content, we want to sort nodes differently depending on what stage we are at. -->
+<!-- TODO: method selector, I want passwordless -->
 <Card.Root>
     <Card.Header>
 		<Card.Title>Create an account</Card.Title>

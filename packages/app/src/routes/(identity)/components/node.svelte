@@ -9,8 +9,11 @@ const { node }: { node: UiNode } = $props();
 const formStore = getFormStore()
 const { form } = formStore.superForm
 
+// TODO: fuse this store with the form state, what if we are submitting, we want disabled state to be influenced by that
 let attr = $derived(node.attributes);
+
 </script>
+// TODO: handle different input types, we shouldn't show field labels for a hidden field
 {#if isUiNodeInputAttributes(attr)}
 <Field.Field>
     <Field.Label>{node.meta.label?.text ?? attr.name}</Field.Label>
