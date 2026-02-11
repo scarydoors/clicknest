@@ -13,11 +13,14 @@ export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "childre
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
-export function superForm(
-    form: Parameters<typeof originalSuperForm>[0],
-    formOptions: Parameters<typeof originalSuperForm>[1],
-): ReturnType<typeof originalSuperForm> {
-    return originalSuperForm(form, {
+export function superForm<
+  T extends Record<string, unknown>,
+  M = any
+>(
+    form: Parameters<typeof originalSuperForm<T, M>>[0],
+    formOptions?: Parameters<typeof originalSuperForm<T, M>>[1],
+): ReturnType<typeof originalSuperForm<T, M>> {
+    return originalSuperForm<T, M>(form, {
         SPA: true,
         ...formOptions
     })

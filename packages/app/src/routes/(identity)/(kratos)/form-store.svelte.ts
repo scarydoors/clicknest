@@ -3,10 +3,11 @@ import { getFlowStore } from "./flow-store.svelte";
 import { superForm } from "$lib/utils";
 import { getDefaultValues, transformIntoNestedForm, type FormValues } from "../utils/form";
 import type { UpdateRegistrationFlowBody } from "@ory/client-fetch";
+import type { SuperForm } from "sveltekit-superforms";
 
 export class FormStore {
     flowStore = getFlowStore();
-    superForm: any
+    superForm: SuperForm<FormValues>
 
     constructor() {
         const flowStore = getFlowStore();
@@ -19,11 +20,10 @@ export class FormStore {
                         return;
                     }
 
-                    console.log(transformIntoNestedForm(form.data as unknown as FormValues));
+                    console.log(transformIntoNestedForm(form.data));
 
-                    // TODO: fix this casting disaster
                     flowStore.updateFlow(
-                        transformIntoNestedForm(form.data as unknown as FormValues) as unknown as UpdateRegistrationFlowBody
+                        transformIntoNestedForm(form.data) as unknown as UpdateRegistrationFlowBody
                     )
                 }
             }

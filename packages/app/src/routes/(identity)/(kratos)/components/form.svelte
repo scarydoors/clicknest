@@ -1,8 +1,8 @@
 <script lang="ts">
 import * as Card from "$lib/components/ui/card/index.js";
 	import * as Field from "$lib/components/ui/field/index";
-import { getFlowStore } from "../stores/flow-store.svelte";
-import { setFormStore } from "../stores/form-store.svelte";
+import { getFlowStore } from "../flow-store.svelte";
+import { setFormStore } from "../form-store.svelte";
 import Node from "./node.svelte";
 
 const flowStore = getFlowStore()
@@ -10,8 +10,6 @@ const formStore = setFormStore()
 const { enhance } = formStore.superForm
 
 let nodes = $derived(flowStore.flow?.ui.nodes);
-
-
 
 </script>
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { PUBLIC_KRATOS_API_URL } from "$env/static/public"
 import { Configuration, FlowType, FrontendApi } from "@ory/client-fetch";
-import { setFlowStore } from "../stores/flow-store.svelte";
-import Form from "../components/form.svelte";
+import { setFlowStore } from "../(kratos)/flow-store.svelte";
+import Form from "../(kratos)/components/form.svelte";
 
 const frontendClient = new FrontendApi(
     new Configuration({
