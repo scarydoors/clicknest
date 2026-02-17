@@ -1,24 +1,20 @@
 <script lang="ts">
-import Input from "$lib/components/ui/input/input.svelte";
-import { isUiNodeInputAttributes} from "@ory/client-fetch";
-import * as Field from "$lib/components/ui/field/index";
-import { getFormStore } from "../form-store.svelte";
+	import { UiNodeInputAttributesTypeEnum } from "@ory/client-fetch";
 import type { UiNodeInput } from "../node";
+	import NodeHiddenInputRenderer from "./node-hidden-input-renderer.svelte";
+import NodeInputButtonRenderer from "./node-input-button-renderer.svelte";
+import NodeInputRenderer from "./node-input-renderer.svelte";
 
 const { node }: { node: UiNodeInput } = $props();
 
-const formStore = getFormStore()
-const { form } = formStore.superForm
+const buttonProps: UiNodeInputAttributesTypeEnum[] = [UiNodeInputAttributesTypeEnum.Button, UiNodeInputAttributesTypeEnum.Submit];
 
-// TODO: fuse this store with the form state, what if we are submitting, we want disabled state to be influenced by that
-let attr = $derived(node.attributes);
-
-// TODO: handle different input types, we shouldn't show field labels for a hidden field
 </script>
-{#if isUiNodeInputAttributes(attr)}
-<Field.Field>
-    <Field.Label>{node.meta.label?.text ?? attr.name}</Field.Label>
-    <Input id={attr.name} type={attr.type} required={attr.required} bind:value={$form[attr.name]} />
-</Field.Field>
+{#if buttonProps.includes(node.attributes.type)}
+    <NodeInputButtonRenderer node={node} />
+{:else if node.attributes.type === "hidden"}
+    <NodeHiddenInputRenderer node={node} />
+{:else}
+    <NodeInputRenderer node={node} />
 {/if}
 

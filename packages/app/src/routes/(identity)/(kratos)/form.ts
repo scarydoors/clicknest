@@ -1,6 +1,8 @@
 import { isUiNodeInputAttributes, type UiNode } from "@ory/client-fetch"
 
-export type FormValues = Record<string, string | boolean | number | undefined>
+export interface FormValues {
+    [key: string]: string | boolean | number | undefined
+}
 
 export function getDefaultValues(flow?: {
   active?: string

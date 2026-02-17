@@ -1,7 +1,7 @@
 import { getContext, setContext } from "svelte";
 import { getFlowStore } from "./flow-store.svelte";
 import { superForm } from "$lib/utils";
-import { getDefaultValues, transformIntoNestedForm, type FormValues } from "../utils/form";
+import { getDefaultValues, transformIntoNestedForm, type FormValues } from "./form.ts";
 import type { UpdateRegistrationFlowBody } from "@ory/client-fetch";
 import type { SuperForm } from "sveltekit-superforms";
 

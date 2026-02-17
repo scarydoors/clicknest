@@ -24,7 +24,7 @@ let nodes = $derived(flowStore.flow?.ui.nodes);
     <Card.Content>
         <form use:enhance method="POST">
             <Field.Group>
-                {#each nodes as node}
+                {#each nodes as node ("id" in node.attributes ? node.attributes.id : node.attributes.name)}
                     <Node node={node}/>
                 {/each}
             </Field.Group>
