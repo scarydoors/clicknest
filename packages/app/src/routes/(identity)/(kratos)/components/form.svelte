@@ -10,7 +10,6 @@ const formStore = setFormStore()
 const { enhance } = formStore.superForm
 
 let nodes = $derived(flowStore.flow?.ui.nodes);
-
 </script>
 
 <!-- TODO: dynamic title, description -->

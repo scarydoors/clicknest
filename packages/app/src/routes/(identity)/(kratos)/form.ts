@@ -8,6 +8,7 @@ export function getDefaultValues(flow?: {
   active?: string
   ui: { nodes: UiNode[] }
 }): FormValues {
+    // TODO: sanitize this, there are some things we don't want to put inside the form
     return flow?.ui.nodes.reduce<FormValues>((form, node) => {
         const attrs = node.attributes;
         if (isUiNodeInputAttributes(attrs)) {

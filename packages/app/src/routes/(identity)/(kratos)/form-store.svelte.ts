@@ -25,6 +25,8 @@ export class FormStore {
                     await flowStore.updateFlow(
                         transformIntoNestedForm(form.data) as unknown as UpdateRegistrationFlowBody
                     )
+
+                    form.data = getDefaultValues(flowStore.flow)
                 }
             }
         )
