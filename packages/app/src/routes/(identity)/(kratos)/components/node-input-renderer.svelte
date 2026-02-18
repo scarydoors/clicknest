@@ -16,7 +16,6 @@ let attr = useNodeAttributes(node.attributes);
 let label = $derived(getNodeLabel(node));
 </script>
 <Field.Field>
-    {attr.name}
     <Field.Label>{label?.text}</Field.Label>
     <Input id={attr.name} type={attr.type} required={attr.required} bind:value={$form[attr.name]} />
 </Field.Field>

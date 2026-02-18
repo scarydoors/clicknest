@@ -61,7 +61,7 @@ export class FlowStore<T extends Flow> {
         createFlow(params).then((resp) => resp.value()).then((resp) => this.handleSetFlow(resp)).catch(errorHandler)
     }
 
-    updateFlow(body: UpdateBody<T>) {
+    async updateFlow(body: UpdateBody<T>) {
         const errorHandler = handleFlowError({
             onValidationError: (body: T) => this.flow = body,
             // TODO: onRestartFlow, use ory/kratos built-in flow redirect URLs?
@@ -76,7 +76,7 @@ export class FlowStore<T extends Flow> {
         })
 
         if (this.flow) {
-            this.onUpdateFlow(this.flow.id, body).then((resp) => resp.value()).then(() => {
+            await this.onUpdateFlow(this.flow.id, body).then((resp) => resp.value()).then(() => {
                 throw new Error("not implemented");
             }).catch(errorHandler)
         } else {

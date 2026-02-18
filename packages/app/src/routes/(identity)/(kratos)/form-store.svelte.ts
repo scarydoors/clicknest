@@ -15,14 +15,14 @@ export class FormStore {
             getDefaultValues(this.flowStore.flow),
             {
                 validators: false,
-                onUpdate({ form }) {
+                resetForm: false,
+                async onUpdate({ form }) {
                     if (!form.valid) {
                         return;
                     }
 
                     console.log(transformIntoNestedForm(form.data));
-
-                    flowStore.updateFlow(
+                    await flowStore.updateFlow(
                         transformIntoNestedForm(form.data) as unknown as UpdateRegistrationFlowBody
                     )
                 }
