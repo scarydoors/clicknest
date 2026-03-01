@@ -1,6 +1,6 @@
 import { isUiNodeInputAttributes, type UiNode } from "@ory/client-fetch"
 
-export interface FormValues {
+export type FormValues = {
     [key: string]: string | boolean | number | undefined
 }
 
@@ -19,7 +19,7 @@ export function getDefaultValues(flow?: {
     }, {}) ?? {};
 }
 
-export interface NestedFormValues {
+export type NestedFormValues = {
     [key: string]: string | boolean | number | undefined | NestedFormValues
 }
 

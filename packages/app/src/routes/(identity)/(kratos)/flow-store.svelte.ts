@@ -1,38 +1,51 @@
-import { handleFlowError, type ApiResponse, type FlowType, type RegistrationFlow, type SuccessfulNativeRegistration, type UpdateRegistrationFlowBody } from "@ory/client-fetch";
+import { handleContinueWith, handleFlowError, type ApiResponse, FlowType, type RegistrationFlow, type SuccessfulNativeRegistration, type UpdateRegistrationFlowBody, type VerificationFlow, type UpdateVerificationFlowBody } from "@ory/client-fetch";
 import { page } from "$app/state";
 import { goto } from "$app/navigation";
 import { getContext, setContext } from "svelte";
 
-export type Flow = RegistrationFlow;
+type FlowTypeMap = {
+    [FlowType.Registration]: {
+        flow: RegistrationFlow;
+        updateBody: UpdateRegistrationFlowBody;
+        updateResponse: SuccessfulNativeRegistration;
+    },
+    [FlowType.Verification]: {
+        flow: VerificationFlow;
+        updateBody: UpdateVerificationFlowBody;
+        updateResponse: VerificationFlow;
+    }
 
-type UpdateBody<T extends Flow> =
-    T extends RegistrationFlow ? UpdateRegistrationFlowBody :
-    never;
-
-type UpdateResponse<T extends Flow> = 
-    T extends RegistrationFlow ? SuccessfulNativeRegistration :
-    never;
-
-type FlowStoreProps<T extends Flow> = {
-    flowType: FlowType,
-    createFlow: (params: URLSearchParams) => Promise<ApiResponse<T>>,
-    getFlow: (id: string) => Promise<ApiResponse<T>>,
-    updateFlow: UpdateFlow<T>,
 }
 
-type UpdateFlow<T extends Flow> = (id: string, body: UpdateBody<T>) => Promise<ApiResponse<UpdateResponse<T>>>;
+type Flow<K extends keyof FlowTypeMap> = FlowTypeMap[K]['flow'];
 
-export class FlowStore<T extends Flow> {
-    flow = $state<T>();
+type UpdateBody<K extends keyof FlowTypeMap> = FlowTypeMap[K]['updateBody'];
 
-    private onUpdateFlow: UpdateFlow<T>
+type UpdateResponse<K extends keyof FlowTypeMap> = FlowTypeMap[K]['updateResponse'];
+
+type FlowStoreProps<K extends keyof FlowTypeMap> = {
+    flowType: K,
+    createFlow: (params: URLSearchParams) => Promise<ApiResponse<K>>,
+    getFlow: (id: string) => Promise<ApiResponse<K>>,
+    updateFlow: UpdateFlow<K>,
+}
+
+type UpdateFlow<K extends keyof FlowTypeMap> = (id: string, body: UpdateBody<K>) => Promise<ApiResponse<UpdateResponse<K>>>;
+
+export class FlowStore<K extends keyof FlowTypeMap> {
+    flowType: K
+    flow = $state<Flow<K>>();
+
+    private onUpdateFlow: UpdateFlow<K>
 
     constructor({
         flowType,
         createFlow,
         getFlow,
         updateFlow
-    }: FlowStoreProps<T>) {
+    }: FlowStoreProps<K>) {
+        this.flowType = flowType
+
         const errorHandler = handleFlowError({
             onValidationError: () => {},
             // TODO: onRestartFlow, use ory/kratos built-in flow redirect URLs?
@@ -61,12 +74,13 @@ export class FlowStore<T extends Flow> {
         createFlow(params).then((resp) => resp.value()).then((resp) => this.handleSetFlow(resp)).catch(errorHandler)
     }
 
-    async updateFlow(body: UpdateBody<T>) {
+    async updateFlow(body: UpdateBody<K>) {
         const errorHandler = handleFlowError({
-            onValidationError: (body: T) => this.flow = body,
+            onValidationError: (body: Flow<K>) => this.flow = body,
             // TODO: onRestartFlow, use ory/kratos built-in flow redirect URLs?
             onRestartFlow: () => {},
             onRedirect: (url, external) => {
+                console.log('i want to redirect');
                 if (external) {
                     window.location.assign(url)
                 } else {
@@ -76,15 +90,37 @@ export class FlowStore<T extends Flow> {
         })
 
         if (this.flow) {
-            await this.onUpdateFlow(this.flow.id, body).then((resp) => resp.value()).then(() => {
-                throw new Error("not implemented");
+            await this.onUpdateFlow(this.flow.id, body).then((resp) => resp.value()).then((body) => {
+                if (this.flowType == FlowType.Registration) {
+                    const didContinueWith = handleContinueWith((body as UpdateResponse<FlowType.Registration>).continue_with, {
+                        onRedirect: (url, external) => {
+                            console.log('i want to redirect');
+                            if (external) {
+                                window.location.assign(url)
+                            } else {
+                                goto(url)
+                            }
+                        }
+                    })
+
+                    // eslint-disable-next-line promise/always-return
+                    if (didContinueWith) {
+                        return
+                    }
+
+                    // We did not receive a valid continue_with, but the state flow is still a success. In this case we re-initialize
+                    // the registration flow which will redirect the user to the default url.
+                    //onRedirect(registrationUrl(config), true)
+                } else if (this.flowType == FlowType.Verification) {
+                    this.flow = body as UpdateResponse<FlowType.Verification>
+                }
             }).catch(errorHandler)
         } else {
             throw new Error("Tried calling `updateFlow` when flow is undefined");
         }
     }
 
-    private async handleSetFlow(flow: T) {
+    private async handleSetFlow(flow: Flow<K>) {
         this.flow = flow;
 
         const params = new URLSearchParams(page.url.searchParams);
@@ -99,10 +135,10 @@ export class FlowStore<T extends Flow> {
 
 const SYMBOL_KEY = "identity-flow-store";
 
-export function setFlowStore<T extends Flow>(flowStoreProps: FlowStoreProps<T>): FlowStore<T> {
+export function setFlowStore<K extends keyof FlowTypeMap>(flowStoreProps: FlowStoreProps<K>): FlowStore<K> {
     return setContext(Symbol.for(SYMBOL_KEY), new FlowStore(flowStoreProps))
 }
 
-export function getFlowStore<T extends Flow>(): FlowStore<T> {
+export function getFlowStore<K extends keyof FlowTypeMap>(): FlowStore<K> {
     return getContext(Symbol.for(SYMBOL_KEY))
 }
