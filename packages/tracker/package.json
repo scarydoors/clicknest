@@ -1,17 +1,17 @@
 {
-    "name": "tracker",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "type": "module",
-    "scripts": {
-        "dev": "tsc --watch",
-        "build": "tsc"
-    },
-    "devDependencies": {
-        "@types/bun": "latest",
-        "tslib": "^2.8.1"
-    },
-    "peerDependencies": {
-        "typescript": "^5.9.2"
-    }
+  "name": "tracker",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "tslib": "^2.8.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  }
 }
