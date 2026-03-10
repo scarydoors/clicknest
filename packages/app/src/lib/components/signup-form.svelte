@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button/index.js';
-	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Field from '$lib/components/ui/field/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import type { ComponentProps } from 'svelte';
+import { Button } from '$lib/components/ui/button/index.js';
+import * as Card from '$lib/components/ui/card/index.js';
+import * as Field from '$lib/components/ui/field/index.js';
+import { Input } from '$lib/components/ui/input/index.js';
+import type { ComponentProps } from 'svelte';
 
-	let { ...restProps }: ComponentProps<typeof Card.Root> = $props();
+let { ...restProps }: ComponentProps<typeof Card.Root> = $props();
 </script>
 
 <Card.Root {...restProps}>

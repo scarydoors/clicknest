@@ -1,6 +1,6 @@
 <script>
-	import GalleryVerticalEndIcon from '@lucide/svelte/icons/gallery-vertical-end';
-	import SignupForm from '$lib/components/signup-form.svelte';
+import GalleryVerticalEndIcon from '@lucide/svelte/icons/gallery-vertical-end';
+import SignupForm from '$lib/components/signup-form.svelte';
 </script>
 
 <div class="grid min-h-svh lg:grid-cols-2">

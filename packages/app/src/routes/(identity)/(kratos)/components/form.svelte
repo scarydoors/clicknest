@@ -1,29 +1,29 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Field from '$lib/components/ui/field/index';
-	import { getNodeId, isUiNodeInputAttributes, type UiNode } from '@ory/client-fetch';
-	import { getFlowStore } from '../flow-store.svelte';
-	import { setFormStore } from '../form-store.svelte';
-	import Node from './node.svelte';
-	import { filterItems } from 'valibot';
+import * as Card from '$lib/components/ui/card/index.js';
+import * as Field from '$lib/components/ui/field/index';
+import { getNodeId, isUiNodeInputAttributes, type UiNode } from '@ory/client-fetch';
+import { getFlowStore } from '../flow-store.svelte';
+import { setFormStore } from '../form-store.svelte';
+import Node from './node.svelte';
+import { filterItems } from 'valibot';
 
-	const flowStore = getFlowStore();
-	const formStore = setFormStore();
-	const { enhance } = formStore.superForm;
+const flowStore = getFlowStore();
+const formStore = setFormStore();
+const { enhance } = formStore.superForm;
 
-	let nodes = $derived(flowStore.flow?.ui.nodes);
+let nodes = $derived(flowStore.flow?.ui.nodes);
 
-	function getNodeKey(node: UiNode) {
-		const id = getNodeId(node);
-		return `${node.group}-${id}`;
-	}
+function getNodeKey(node: UiNode) {
+	const id = getNodeId(node);
+	return `${node.group}-${id}`;
+}
 
-	let hiddenNodes = $derived(
-		nodes?.filter(
-			(node) => isUiNodeInputAttributes(node.attributes) && node.attributes.type == 'hidden'
-		)
-	);
-	let restNodes = $derived(nodes?.filter((node) => !hiddenNodes?.includes(node)));
+let hiddenNodes = $derived(
+	nodes?.filter(
+		(node) => isUiNodeInputAttributes(node.attributes) && node.attributes.type == 'hidden'
+	)
+);
+let restNodes = $derived(nodes?.filter((node) => !hiddenNodes?.includes(node)));
 </script>
 
 <!-- TODO: dynamic title, description -->
