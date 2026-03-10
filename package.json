@@ -10,6 +10,9 @@
         }
     },
     "scripts": {
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+        "app:dev": "bun run --filter app dev",
+        "tracker:dev": "bun run --filter tracker dev",
+        "dev": "bun run --filter '*' dev"
     }
 }
