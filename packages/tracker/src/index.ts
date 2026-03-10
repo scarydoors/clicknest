@@ -2,11 +2,11 @@ import { setupAutoTrack, track } from "./track";
 import { Config, setConfig } from "./config";
 
 function init(config: Config) {
-    setConfig(config)
+  setConfig(config);
 
-    setupAutoTrack()
-    track("pageview")
+  setupAutoTrack();
+  track("pageview");
 }
 
-export default { init, track }
-export { Config }
+export default { init, track };
+export { Config };

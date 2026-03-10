@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Button } from "$lib/components/ui/button/index.js";
-	import * as Card from "$lib/components/ui/card/index.js";
-	import * as Field from "$lib/components/ui/field/index.js";
-	import { Input } from "$lib/components/ui/input/index.js";
-	import type { ComponentProps } from "svelte";
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Field from '$lib/components/ui/field/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import type { ComponentProps } from 'svelte';
 
 	let { ...restProps }: ComponentProps<typeof Card.Root> = $props();
 </script>
@@ -24,8 +24,7 @@
 					<Field.Label for="email">Email</Field.Label>
 					<Input id="email" type="email" placeholder="m@example.com" required />
 					<Field.Description>
-						We'll use this to contact you. We will not share your email with anyone
-						else.
+						We'll use this to contact you. We will not share your email with anyone else.
 					</Field.Description>
 				</Field.Field>
 				<Field.Field>
