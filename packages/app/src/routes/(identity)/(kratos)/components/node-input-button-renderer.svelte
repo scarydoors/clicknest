@@ -15,8 +15,11 @@ const { form } = formStore.superForm;
 </script>
 
 <Button
-	type="submit"
+	type={node.attributes.type == "submit" ? "submit" : "button"}
 	onclick={() => {
 		$form[node.attributes.name] = node.attributes.value;
+        if (node.attributes.name == "screen") {
+            $form.method = "profile";
+        }
 	}}>{label?.text}</Button
 >
