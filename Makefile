@@ -9,6 +9,10 @@ DB_CONFIGS := pg|$(MIGRATE_POSTGRES_DIR)|postgres|$(POSTGRES_DB_DSN) \
 help::
 	@echo "Usage: make [target]"
 	@echo ""
+	@echo "  migrate-up          Run all pending migrations" 
+	@echo "  migrate-down        Roll back last migration" 
+	@echo "  migrate-status      Show migration status" 
+	@echo ""
 
 define make-migrate-targets
 $(eval alias := $(word 1,$(subst |, ,$(1))))
@@ -20,7 +24,10 @@ migrate-$(alias)-up: ; goose -dir $(dir) $(driver) $(dsn) up
 migrate-$(alias)-down: ; goose -dir $(dir) $(driver) "$(dsn)" down
 migrate-$(alias)-status: ; goose -dir $(dir) $(driver) "$(dsn)" status
 migrate-$(alias)-create: ; goose -dir $(dir) $(driver) "$(dsn)" create $(name) sql
+
 migrate-up: migrate-$(alias)-up
+migrate-down: migrate-$(alias)-down
+migrate-status: migrate-$(alias)-status
 
 .PHONY: migrate-$(alias)-up migrate-$(alias)-down migrate-$(alias)-status migrate-$(alias)-create
 
@@ -33,5 +40,6 @@ help::
 endef
 
 $(foreach config,$(DB_CONFIGS),$(eval $(call make-migrate-targets,$(config))))
+.PHONY: migrate-up migrate-down migrate-status
 
 .DEFAULT_GOAL := help
