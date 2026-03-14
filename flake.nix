@@ -20,6 +20,7 @@
                         git
                         golangci-lint
                         bun
+                        gnumake
                     ];
                 };
             }
