@@ -20,6 +20,7 @@ migrate-$(alias)-up: ; goose -dir $(dir) $(driver) $(dsn) up
 migrate-$(alias)-down: ; goose -dir $(dir) $(driver) "$(dsn)" down
 migrate-$(alias)-status: ; goose -dir $(dir) $(driver) "$(dsn)" status
 migrate-$(alias)-create: ; goose -dir $(dir) $(driver) "$(dsn)" create $(name) sql
+migrate-up: migrate-$(alias)-up
 
 .PHONY: migrate-$(alias)-up migrate-$(alias)-down migrate-$(alias)-status migrate-$(alias)-create
 
