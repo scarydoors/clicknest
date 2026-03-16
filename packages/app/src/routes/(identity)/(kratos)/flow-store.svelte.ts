@@ -7,7 +7,10 @@ import {
 	type SuccessfulNativeRegistration,
 	type UpdateRegistrationFlowBody,
 	type VerificationFlow,
-	type UpdateVerificationFlowBody
+	type UpdateVerificationFlowBody,
+    type LoginFlow,
+    type UpdateLoginFlowBody,
+    type SuccessfulNativeLogin
 } from '@ory/client-fetch';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
@@ -24,6 +27,11 @@ type FlowTypeMap = {
 		updateBody: UpdateVerificationFlowBody;
 		updateResponse: VerificationFlow;
 	};
+    [FlowType.Login]: {
+        flow: LoginFlow;
+        updateBody: UpdateLoginFlowBody;
+        updateResponse: SuccessfulNativeLogin;
+    };
 };
 
 type Flow<K extends keyof FlowTypeMap> = FlowTypeMap[K]['flow'];
@@ -34,8 +42,8 @@ type UpdateResponse<K extends keyof FlowTypeMap> = FlowTypeMap[K]['updateRespons
 
 type FlowStoreProps<K extends keyof FlowTypeMap> = {
 	flowType: K;
-	createFlow: (params: URLSearchParams) => Promise<ApiResponse<K>>;
-	getFlow: (id: string) => Promise<ApiResponse<K>>;
+	createFlow: (params: URLSearchParams) => Promise<ApiResponse<Flow<K>>>;
+	getFlow: (id: string) => Promise<ApiResponse<Flow<K>>>;
 	updateFlow: UpdateFlow<K>;
 };
 

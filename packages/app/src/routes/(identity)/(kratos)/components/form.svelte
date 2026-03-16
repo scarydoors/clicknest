@@ -5,7 +5,6 @@ import { getNodeId, isUiNodeInputAttributes, type UiNode } from '@ory/client-fet
 import { getFlowStore } from '../flow-store.svelte';
 import { setFormStore } from '../form-store.svelte';
 import Node from './node.svelte';
-import { filterItems } from 'valibot';
 
 const flowStore = getFlowStore();
 const formStore = setFormStore();
@@ -36,11 +35,13 @@ let restNodes = $derived(nodes?.filter((node) => !hiddenNodes?.includes(node)));
 	</Card.Header>
 	<Card.Content>
 		<form use:enhance method="POST">
+            {#if restNodes}
 			<Field.Group>
 				{#each restNodes as node (getNodeKey(node))}
 					<Node {node} />
 				{/each}
 			</Field.Group>
+            {/if}
 		</form>
 	</Card.Content>
 </Card.Root>
