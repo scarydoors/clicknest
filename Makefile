@@ -9,6 +9,13 @@ DB_CONFIGS := pg|$(MIGRATE_POSTGRES_DIR)|postgres|$(POSTGRES_DB_DSN) \
 help::
 	@echo "Usage: make [target]"
 	@echo ""
+	@echo "  serve               Serve the Go backend"
+	@echo ""
+
+.PHONY: serve
+serve: ; air
+
+help::
 	@echo "  migrate-up          Run all pending migrations" 
 	@echo "  migrate-down        Roll back last migration" 
 	@echo "  migrate-status      Show migration status" 
