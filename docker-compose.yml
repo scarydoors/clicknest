@@ -38,18 +38,20 @@ services:
       retries: 5
 
   kratos-migrate:
-    image: oryd/kratos:v1.3.0
+    image: oryd/kratos:v25.4.0
     container_name: kratos_migrate
     environment:
       DSN: postgres://postgres:postgres@postgres:5432/kratos?sslmode=disable
-    command: migrate sql -e --yes
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    volumes:
+      - ./kratos:/etc/config/kratos
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
 
   kratos:
-    image: oryd/kratos:v1.3.0
+    image: oryd/kratos:v25.4.0
     container_name: kratos
     restart: unless-stopped
     ports:

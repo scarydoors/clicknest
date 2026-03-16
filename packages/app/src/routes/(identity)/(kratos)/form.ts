@@ -36,9 +36,6 @@ export function transformIntoNestedForm(form: FormValues): NestedFormValues {
 
 		let obj = transformedForm;
 		for (const [idx, key] of keys.entries()) {
-            if (key == "method") {
-                continue;
-            }
 			const isLastKey = idx == keys.length - 1;
 			if (!(key in obj)) {
 				obj[key] = isLastKey ? value : {};
