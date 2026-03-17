@@ -21,4 +21,8 @@ func setupRoutes(mux *http.ServeMux, logger *slog.Logger, validate *validator.Va
 
 	handlers.RegisterIngestRoutes(apiMux, logger, ingestService)
 	handlers.RegisterStatsRoutes(apiMux, logger, validate, statsService)
+
+	kratosMux := http.NewServeMux()
+	mux.Handle("/kratos-webhooks/", http.StripPrefix("/kratos-webhooks", kratosMux))
+	handlers.RegisterKratosWebhooksRoutes(kratosMux, logger)
 }
