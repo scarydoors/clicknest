@@ -9,9 +9,9 @@
     outputs = { self, nixpkgs, flake-utils, ... }:
         flake-utils.lib.eachDefaultSystem (system:
             let pkgs = import nixpkgs { inherit system; };
-            in {
-                devShells.default = pkgs.mkShell {
-                    buildInputs = with pkgs; [
+            in with pkgs; rec {
+                devShells.default = mkShell {
+                    buildInputs = [
                         go
                         gcc
                         air
@@ -23,6 +23,17 @@
                         gnumake
                     ];
                 };
+
+                packages.app = buildGoModule {
+                    pname = "clicknest";
+                    version = "0.0.0";
+
+                    src = ./.;
+                    vendorHash = null;
+                        doCheck = false;
+                };
+
+                defaultPackage = packages.app;
             }
         );
 }
