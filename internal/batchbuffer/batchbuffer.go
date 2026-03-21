@@ -51,6 +51,7 @@ func NewBatchBuffer[T any](
 func (b *BatchBuffer[T]) Run(ctx context.Context) error {
 	defer close(b.itemCh)
 
+	// TODO: can't spin forever
 	for {
 		select {
 		case <-ctx.Done():
@@ -63,6 +64,7 @@ func (b *BatchBuffer[T]) Run(ctx context.Context) error {
 }
 
 func (b *BatchBuffer[T]) Push(ctx context.Context, item T) error {
+	// TODO: can't spin forever
 	for {
 		select {
 		case <-ctx.Done():

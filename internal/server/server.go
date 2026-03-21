@@ -9,7 +9,12 @@ import (
 	"github.com/scarydoors/clicknest/internal/stats"
 )
 
-func NewServer(logger *slog.Logger, validate *validator.Validate, ingestService *ingest.Service, statsService *stats.Service) http.Handler {
+func NewServer(
+	logger *slog.Logger,
+	validate *validator.Validate,
+	ingestService *ingest.Service,
+	statsService *stats.Service,
+) http.Handler {
 	mux := http.NewServeMux()
 	setupRoutes(mux, logger, validate, ingestService, statsService)
 
