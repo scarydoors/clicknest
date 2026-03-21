@@ -1,4 +1,12 @@
 services:
+  app:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+    ports:
+      - "6969:6969"
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     ports:

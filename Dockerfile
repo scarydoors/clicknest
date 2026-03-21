@@ -1,17 +1,31 @@
-FROM nixos/nix:latest AS builder
+FROM nixos/nix:latest AS base
+
+RUN echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf
+
+FROM base AS builder
 
 COPY . /tmp/build
 WORKDIR /tmp/build
 
 RUN nix \
-    --extra-experimental-features "nix-command flakes" \
     --option filter-syscalls false \
     build
 
 RUN mkdir /tmp/nix-store-closure
 RUN cp -R $(nix-store -qR result/) /tmp/nix-store-closure
 
-FROM scratch
+FROM base AS dev 
+
+WORKDIR /app
+
+COPY flake.nix flake.lock ./
+
+RUN git config --global --add safe.directory /app
+RUN nix --option filter-syscalls false develop -c true
+
+CMD ["nix", "develop", "-c", "air"]
+
+FROM scratch AS prod
 WORKDIR /app
 
 COPY --from=builder /tmp/nix-store-closure /nix/store

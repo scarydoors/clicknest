@@ -72,7 +72,7 @@ selfservice:
             - hook: show_verification_ui
             - hook: web_hook
               config:
-                url: http://localhost:6969/kratos-webhooks/create-user
+                url: http://app:6969/kratos-webhooks/create-user
                 method: POST
                 body: base64://ZnVuY3Rpb24oY3R4KSB7CiAgaWQ6IGN0eC5pZGVudGl0eS5pZCwKICBuYW1lOiBjdHguaWRlbnRpdHkudHJhaXRzLm5hbWUKfQo=
                 response:

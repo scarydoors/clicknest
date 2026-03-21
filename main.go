@@ -29,7 +29,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	clickhouseDB, err := clickhouse.NewClickhouseConn(ctx, clickhouse.ClickhouseDBConfig{
-		Host:     "localhost",
+		Host:     "clickhouse",
 		Port:     "9000",
 		Database: "default",
 		Username: "default",
