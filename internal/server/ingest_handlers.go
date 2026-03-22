@@ -1,4 +1,4 @@
-package handlers
+package server
 
 import (
 	"encoding/json"
@@ -8,11 +8,10 @@ import (
 
 	"github.com/scarydoors/clicknest/internal/analytics"
 	"github.com/scarydoors/clicknest/internal/ingest"
-	"github.com/scarydoors/clicknest/internal/serverutil"
 )
 
-func RegisterIngestRoutes(apiMux *http.ServeMux, logger *slog.Logger, ingestService *ingest.Service) {
-	apiMux.Handle("POST /event", serverutil.ServeErrors(handleEventPost(ingestService, logger)))
+func registerIngestRoutes(apiMux *http.ServeMux, logger *slog.Logger, ingestService *ingest.Service) {
+	apiMux.Handle("POST /event", serveErrors(handleEventPost(ingestService, logger)))
 }
 
 type eventRequest struct {
@@ -23,8 +22,8 @@ type eventRequest struct {
 	Data map[string]string `json:"data,omitempty"`
 }
 
-func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) serverutil.HandlerWithErrorFunc {
-	return serverutil.HandlerWithErrorFunc(
+func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) handlerWithErrorFunc {
+	return handlerWithErrorFunc(
 		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
 
@@ -42,7 +41,7 @@ func handleEventPost(ingestService *ingest.Service, logger *slog.Logger) serveru
 			event.Data = eventRequest.Data
 
 			var salt uint64 = 0 // TODO
-			ip, err := serverutil.GetClientIP(r)
+			ip, err := getClientIP(r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return nil

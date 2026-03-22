@@ -1,4 +1,4 @@
-package serverutil
+package server
 
 import (
 	"net"
@@ -8,7 +8,7 @@ import (
 const xffHeaderName = "X-Forwarded-For"
 
 // TODO: fix naive implementation of IP handler
-func GetClientIP(r *http.Request) (string, error) {
+func getClientIP(r *http.Request) (string, error) {
 	var ip string
 	if xff := r.Header.Get(xffHeaderName); xff != "" {
 		ip = xff

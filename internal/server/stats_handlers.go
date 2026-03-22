@@ -1,4 +1,4 @@
-package handlers
+package server
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/scarydoors/clicknest/internal/serverutil"
 	"github.com/scarydoors/clicknest/internal/stats"
 	"github.com/gorilla/schema"
 	//"github.com/go-playground/locales/en"
@@ -19,8 +18,8 @@ import (
 	//en_translations "github.com/go-playground/validator/v10/translations/en"
 )
 
-func RegisterStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, validate *validator.Validate, statsService *stats.Service) {
-	apiMux.Handle("GET /timeseries", serverutil.ServeErrors(handleTimeseriesGet(statsService, logger, validate)))
+func registerStatsRoutes(apiMux *http.ServeMux, logger *slog.Logger, validate *validator.Validate, statsService *stats.Service) {
+	apiMux.Handle("GET /timeseries", serveErrors(handleTimeseriesGet(statsService, logger, validate)))
 }
 
 type timeseriesGetRawParameters struct {
@@ -54,8 +53,8 @@ func (t timeseriesGetRawParameters) ToParams() (stats.GetTimeseriesParameters, e
 	}, nil
 }
 
-func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, validate *validator.Validate) serverutil.HandlerWithErrorFunc {
-	return serverutil.HandlerWithErrorFunc(
+func handleTimeseriesGet(statsService *stats.Service, logger *slog.Logger, validate *validator.Validate) handlerWithErrorFunc {
+	return handlerWithErrorFunc(
 		func(w http.ResponseWriter, r *http.Request) error {
 			ctx := r.Context()
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/cors"
 	"github.com/scarydoors/clicknest/internal/ingest"
 	"github.com/scarydoors/clicknest/internal/stats"
 )
@@ -16,7 +17,18 @@ func NewServer(
 	statsService *stats.Service,
 ) http.Handler {
 	mux := http.NewServeMux()
-	setupRoutes(mux, logger, validate, ingestService, statsService)
+	mux.Handle("/", http.NotFoundHandler())
 
+	cors := cors.AllowAll()
+
+	apiMux := http.NewServeMux()
+	mux.Handle("/api/", http.StripPrefix("/api", cors.Handler(apiMux)))
+
+	registerIngestRoutes(apiMux, logger, ingestService)
+	registerStatsRoutes(apiMux, logger, validate, statsService)
+
+	kratosMux := http.NewServeMux()
+	mux.Handle("/kratos-webhooks/", http.StripPrefix("/kratos-webhooks", kratosMux))
+	registerKratosWebhooksRoutes(kratosMux, logger)
 	return mux
 }
