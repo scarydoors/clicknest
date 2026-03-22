@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	kratos "github.com/ory/kratos-client-go"
 	"github.com/rs/cors"
 	"github.com/scarydoors/clicknest/internal/ingest"
 	"github.com/scarydoors/clicknest/internal/stats"
@@ -13,6 +14,7 @@ import (
 func NewServer(
 	logger *slog.Logger,
 	validate *validator.Validate,
+	kratosClient *kratos.APIClient,
 	ingestService *ingest.Service,
 	statsService *stats.Service,
 ) http.Handler {

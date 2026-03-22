@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	"github.com/scarydoors/clicknest/internal/auth"
 	"github.com/scarydoors/clicknest/internal/batchbuffer"
 	"github.com/scarydoors/clicknest/internal/clickhouse"
 	"github.com/scarydoors/clicknest/internal/errorutil"
@@ -42,7 +43,6 @@ func main() {
 	}
 
 	clickhouseDB, err := clickhouse.NewClickhouseConn(ctx, config)
-
 	if err != nil {
 		log.Fatalf("failed clickhouse init: %s", err)
 	}
@@ -50,6 +50,11 @@ func main() {
 	defer errorutil.DeferIgnoreErr(clickhouseDB.Close)
 
 	postgresDB, err := postgres.NewPostgresConn(ctx, os.Getenv("POSTGRES_DB_DSN"))
+	if err != nil {
+		log.Fatalf("failed postgres init: %s", err)
+	}
+
+	kratosClient := auth.NewKratosClient(os.Getenv("KRATOS_URL"))
 
 	flushConfig := batchbuffer.FlushConfig{
 		Interval: 4 * time.Second,

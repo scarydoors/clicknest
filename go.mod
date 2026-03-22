@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/schema v1.4.1
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/joho/godotenv v1.5.1
+	github.com/ory/kratos-client-go v1.3.8
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.10.0
