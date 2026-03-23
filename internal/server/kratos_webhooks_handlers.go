@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -29,7 +28,8 @@ func handleCreateUserPost(logger *slog.Logger) handlerWithErrorFunc {
 
 			logger.Info("handleCreateUserPost: received user info", slog.Any("params", params))
 
-			return fmt.Errorf("test");
+			w.WriteHeader(http.StatusNoContent)
+			return nil
 		},
 	)
 }

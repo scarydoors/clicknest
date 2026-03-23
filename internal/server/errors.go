@@ -18,12 +18,13 @@ func (h handlerWithErrorFunc) ServeHTTPWithError(w http.ResponseWriter, r *http.
 	return h(w, r)
 }
 
-func serveErrors(next handlerWithErrorFunc) http.Handler {
+func serveErrors(next handlerWithError) http.Handler {
 	return http.HandlerFunc(
 		func (w http.ResponseWriter, r *http.Request) {
 			err := next.ServeHTTPWithError(w, r)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
+				// TODO: stpo having a cool error haha
 				json.NewEncoder(w).Encode(map[string]string{
 					"type": "cool-error",
 					"error": err.Error(),

@@ -21,10 +21,21 @@ func NewServer(
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
 
-	cors := cors.AllowAll()
+	cors := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:5173",
+		},
+		Debug: true,
+		AllowedMethods: []string{
+			"GET",
+		},
+		AllowCredentials: true,
+	})
+
+	requireAuth := newRequireAuthMiddleware(kratosClient, logger)
 
 	apiMux := http.NewServeMux()
-	mux.Handle("/api/", http.StripPrefix("/api", cors.Handler(apiMux)))
+	mux.Handle("/api/", http.StripPrefix("/api", cors.Handler(requireAuth(apiMux))))
 
 	registerIngestRoutes(apiMux, logger, ingestService)
 	registerStatsRoutes(apiMux, logger, validate, statsService)
@@ -34,3 +45,12 @@ func NewServer(
 	registerKratosWebhooksRoutes(kratosMux, logger)
 	return mux
 }
+
+func respondJson(w http.ResponseWriter, json map[string]string) {
+	
+}
+
+func respondJsonWithStatus(w http.ResponseWriter, json map[string]string, status int) {
+	
+}
+

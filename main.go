@@ -83,7 +83,7 @@ func main() {
 		log.Fatalf("unable to start session store workers: %s", err)
 	}
 
-	srv := server.NewServer(logger, validate, ingestService, statsService)
+	srv := server.NewServer(logger, validate, kratosClient, ingestService, statsService)
 
 	httpServer := http.Server{
 		Addr:    ":6969",

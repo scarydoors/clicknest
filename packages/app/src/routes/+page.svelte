@@ -28,7 +28,9 @@ onMount(() => {
 				start_date: yesterday.toISOString(),
 				end_date: tomorrow.toISOString()
 			}).toString()
-	).then(async (resp) => {
+	, {
+            credentials: 'include'
+        }).then(async (resp) => {
 		const json = await resp.json();
 		data = json.map((t: { timestamp: string; value: number }) => ({
 			...t,
